@@ -514,7 +514,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
   const CARDIO = [
     { id: "laufen", name: "Laufen", muscles: ["Joggen", "Sprinten"], interval: [1], cardio: true },
     { id: "fahrrad", name: "Fahrrad", muscles: ["Fahrrad draußen", "Peloton zu Hause"], interval: [], cardio: true },
-    { id: "schwimmen", name: "Schwimmen", muscles: [], interval: [], cardio: true }
+    { id: "schwimmen", name: "Schwimmen", muscles: ["Dauerschwimmen", "Intervallschwimmen"], interval: [], cardio: true }
   ];
   // Skills: wie Gesamtkörper, Übungen direkt unter EXERCISES["skill_ok"] / ["skill_uk"]
   const SKILLS = [
@@ -676,6 +676,9 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
       { n: "Handstand Push-ups mit Zusatzgewicht", t: "bwp" },
       { n: "Front Lever", t: "bw", sec: true },
       { n: "Planche", t: "bw", sec: true }],
+    // Schwimmen: im Training wird nur die Anzahl der Sätze gewählt (count)
+    "schwimmen:0": ["500 m", "750 m", "1000 m", "1500 m", "2000 m"].map(m => ({ n: m + " Dauerschwimmen", count: true })),
+    "schwimmen:1": ["50 m", "100 m", "150 m", "200 m"].map(m => ({ n: m + " Intervallschwimmen", count: true })),
     skill_uk: [{ n: "Pistol Squats", t: "bw" },
       { n: "Pistol Squats mit Zusatzgewicht", t: "bwp" },
       { n: "Rückwärtssalto", t: "bw" }]
@@ -1047,7 +1050,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
   function woEntry(wo, n, kind) {
     if (!wo.data[n]) {
       const l = lastInSplit(n, wo.split, wo.key);
-      const cnt = kind === "cardio" ? 1 : l ? l.sets.length : kind === "interval" ? 6 : 3;
+      const cnt = kind === "count" ? (l ? l.sets[0].c : 0) : kind === "cardio" ? 1 : l ? l.sets.length : kind === "interval" ? 6 : 3;
       const prev = CHOICE[n] && l ? CHOICE[n].find(k => logFor(k).some(x => x.d === l.d && x.split === l.split)) : null;
       wo.data[n] = { n: cnt, sets: [], pick: CHOICE[n] ? prev || CHOICE[n][0] : null };
     }
@@ -1056,13 +1059,15 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
   function entryUI(wo, n, ptype) {
     const kind = exKind(n, ptype), en = woEntry(wo, n, kind), l = lastInSplit(n, wo.split, wo.key), t = exType(n, wo.split), bw = t !== "w";
     const lastBox = '<div class="wlast"><span class="label">Letztes Mal' + (l ? " · " + fmt(new Date(l.d + "T00:00:00"), { day: "numeric", month: "short" }) : "") + "</span>" +
-      (l ? "<ol>" + l.sets.map(e => "<li>" + ("km" in e ? de(e.km) + " km · " + de(e.min) + " min" : "m" in e ? de(e.m) + " m · " + de(e.s) + " s" : fmtSet(e, t, exUnit(n))) + "</li>").join("") + "</ol>" : '<span class="none">Noch kein Eintrag in diesem Split.</span>') + "</div>";
+      (l ? "<ol>" + l.sets.map(e => "<li>" + ("c" in e ? e.c + (e.c === 1 ? " Satz" : " Sätze") : "km" in e ? de(e.km) + " km · " + de(e.min) + " min" : "m" in e ? de(e.m) + " m · " + de(e.s) + " s" : fmtSet(e, t, exUnit(n))) + "</li>").join("") + "</ol>" : '<span class="none">Noch kein Eintrag in diesem Split.</span>') + "</div>";
     const F = kind === "cardio" ? [["km", "km"], ["min", "min"]] : kind === "interval" ? [["m", "m"], ["s", "Sek."]] : t === "bw" ? [["reps", exUnit(n)]] : [["kg", bw ? "+ kg" : "kg"], ["reps", exUnit(n)]];
     const ph = (i, f) => { const e = l && l.sets[i]; return e && e[f] != null ? de(e[f]) : f === "kg" && bw ? "0" : "–"; };
     const rows = Array.from({ length: en.n }, (_, i) => '<div class="srow"><span class="sn">' + (kind === "cardio" ? "" : i + 1) + "</span>" + (kind === "strength" && t === "bw" ? '<span class="sx sbw">Körpergewicht ×</span>' : "") +
       F.map(([f, u]) => '<label class="sin"><input type="text" inputmode="decimal" autocomplete="off" placeholder="' + ph(i, f) + '" value="' + esc((en.sets[i] || {})[f] == null ? "" : en.sets[i][f]) + '" data-wset="' + i + '" data-wf="' + f + '"><span>' + u + "</span></label>").join('<span class="sx">' + (kind === "strength" ? "×" : "in") + "</span>") + "</div>").join("");
     const counter = CHOICE[n] ? '<div class="scount"><span class="label">Wo fährst du?</span><div class="schips">' + CHOICE[n].map(k => '<button type="button" class="fchip" data-wpick="' + esc(k) + '" aria-pressed="' + (en.pick === k) + '">' + (k === "Fahrrad draußen" ? "Draußen" : "Peloton zu Hause") + "</button>").join("") + "</div></div>" : kind === "cardio" ? "" : '<div class="scount"><span class="label">' + (kind === "interval" ? "Läufe" : "Sätze") + '</span><div class="schips">' +
       (kind === "interval" ? [4, 6, 8, 10] : [1, 2, 3, 4, 5, 6]).map(k => '<button type="button" class="fchip" data-wcount="' + k + '" aria-pressed="' + (en.n === k) + '">' + k + "</button>").join("") + "</div></div>";
+    if (kind === "count") return lastBox + '<div class="scount"><span class="label">Wie viele Sätze?</span><div class="schips">' +
+      [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(k => '<button type="button" class="fchip" data-wcount="' + k + '" aria-pressed="' + (en.n === k) + '">' + k + "</button>").join("") + "</div></div>";
     return lastBox + counter + '<div class="sets">' + rows + "</div>";
   }
   function viewWorkout() {
@@ -1140,7 +1145,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
     return head("group:" + g, gName(g)) + '<section class="wcard ph-m"><span class="wtag">' + gName(g) + " · " + ORD[i] + " Übung</span><h2>" + esc(n) + "</h2>" +
       (bw ? '<div class="wmin">' + bwLabel() + (exType(n, wo.split) === "bwp" ? " + Zusatzgewicht" : "") + (state.profile.weight ? "" : " · trage es im Profil ein") + "</div>" : "") +
       '<button type="button" class="linkbtn" data-wgo="pick:' + sk + '">Andere Übung wählen</button></section>' +
-      entryUI(wo, n, p.type) + '<p class="hint-sm">Trag ein, was du gemacht hast. Leere Felder werden nicht gespeichert.</p>' +
+      entryUI(wo, n, p.type) + (exKind(n, p.type) === "count" ? "" : '<p class="hint-sm">Trag ein, was du gemacht hast. Leere Felder werden nicht gespeichert.</p>') +
       '<div class="wnav">' + btn("data-wslotdone", "✓ Übung abschließen") + "</div>";
   }
   function finishWorkout() {
@@ -1149,7 +1154,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
     (B ? Object.values(wo.slots || {}).map(x => x.n) : woItems(wo)).forEach(n => {
       const en = wo.data[n]; if (!en) return;
       const kind = exKind(n, p.type);
-      const sets = en.sets.slice(0, en.n).filter(Boolean).map(e => kind === "cardio" ? { km: num(e.km), min: num(e.min) } : kind === "interval" ? { m: num(e.m), s: num(e.s) } : { kg: num(e.kg), reps: num(e.reps) })
+      const sets = kind === "count" ? (en.n ? [{ c: en.n }] : []) : en.sets.slice(0, en.n).filter(Boolean).map(e => kind === "cardio" ? { km: num(e.km), min: num(e.min) } : kind === "interval" ? { m: num(e.m), s: num(e.s) } : { kg: num(e.kg), reps: num(e.reps) })
         .filter(e => kind === "cardio" ? e.km || e.min : kind === "interval" ? e.m || e.s : e.reps);
       if (!sets.length) return;
       const name = en.pick || n;
@@ -1204,7 +1209,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
   // Trainingslog je Übung: nur echte Einträge aus abgeschlossenen Trainings.
   // Zuletzt = neueste Einheit (schwerster Satz), PR = Satz mit dem höchsten Gewicht (bei Gleichstand mehr Wdh.)
   const BW_RE = /Liegestütz|Klimmzüg|Chin-ups|Dips|Inverted Rows|Pistol|Nordic|Hüftbrücke|Knieheben|Seitstütz|Unterarmstütz|Plank|Handstand|Snow Angels|T-Heben|Sissy|Lunges|Slider|Handtuch|Adduktorenheben|an Ringen|am Tisch|einbeinig|Hollow|L-Sit|Beinheben|Burpee|Ab Wheel|Dragon Flag|Superman|Muscle-up|Jump/;
-  const exKind = (n, type) => cardioHome(n) ? (cardioHome(n)[0].interval.includes(cardioHome(n)[1]) ? "interval" : "cardio") : n === "Sprinten" ? "interval" : (type === "run" || type === "bike" || CHOICE[n] || /^Joggen$|^Fahrrad|^Peloton/.test(n)) ? "cardio" : "strength";
+  const exKind = (n, type) => (exEntry(n) || {}).count ? "count" : cardioHome(n) ? (cardioHome(n)[0].interval.includes(cardioHome(n)[1]) ? "interval" : "cardio") : n === "Sprinten" ? "interval" : (type === "run" || type === "bike" || CHOICE[n] || /^Joggen$|^Fahrrad|^Peloton/.test(n)) ? "cardio" : "strength";
   const exEntry = n => { for (const k in EXERCISES) { const x = EXERCISES[k].find(y => y.n === n); if (x) return x; } return null; };
   const exType = (n, split) => { const x = exEntry(n); return x && x.t ? x.t : split === "kg" || BW_RE.test(n) ? "bwp" : "w"; };
   const isBW = (n, split) => exType(n, split) !== "w";
@@ -1220,6 +1225,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
   const fmtSet = (e, t, u) => (t === "bw" ? bwLabel() : t === "bwp" ? (e.kg ? bwLabel() + " + " + de(e.kg) + " kg" : bwLabel()) : de(e.kg) + " kg") + " × " + e.reps + " " + (u || "Wdh.");
   function fmtSession(x, n) {
     if (!x) return "";
+    if (x.sets[0] && "c" in x.sets[0]) return x.sets[0].c + (x.sets[0].c === 1 ? " Satz" : " Sätze");
     if (x.sets[0] && "km" in x.sets[0]) return de(x.sets[0].km) + " km · " + de(x.sets[0].min) + " min";
     if (x.sets[0] && "m" in x.sets[0]) return x.sets.length + " × " + de(x.sets[0].m) + " m · Ø " + de(x.sets.reduce((a, e) => a + e.s, 0) / x.sets.length) + " s";
     const t = exType(n, x.split);
@@ -1261,7 +1267,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
   function viewMuscle() {
     const [gid, i] = state.muscle.split(":"), g = ALL_GROUPS.find(x => x.id === gid), m = g.muscles[+i];
     const all = EXERCISES[state.muscle] || [], sprint = g.cardio && g.interval.includes(+i);
-    const cards = all.map(x => '<article class="ex"><div class="ex-top"><h4>' + esc(x.n) + "</h4></div>" + (g.cardio ? cardioRows(x.n, sprint) : recRows(x.n)) + "</article>").join("");
+    const cards = all.map(x => '<article class="ex"><div class="ex-top"><h4>' + esc(x.n) + "</h4></div>" + (x.count ? "" : g.cardio ? cardioRows(x.n, sprint) : recRows(x.n)) + "</article>").join("");
     return '<button type="button" class="back" data-back>‹ ' + g.name + '</button>' +
       '<div class="dhead"><span class="label">' + g.name + "</span><h2>" + m + '</h2><div class="sub">' + all.length + (all.length === 1 ? " Übung" : " Übungen") + "</div></div>" +
       '<div class="exlist">' + (cards || '<div class="pr-empty"><strong>Noch keine Übungen</strong>Die Übungen für ' + (g.cardio ? m : "diesen Muskel") + ' trägst du neu ein.</div>') + "</div>";
