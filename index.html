@@ -675,7 +675,10 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
       { n: "Handstand Push-ups", t: "bw" },
       { n: "Handstand Push-ups mit Zusatzgewicht", t: "bwp" },
       { n: "Front Lever", t: "bw", sec: true },
-      { n: "Planche", t: "bw", sec: true }]
+      { n: "Planche", t: "bw", sec: true }],
+    skill_uk: [{ n: "Pistol Squats", t: "bw" },
+      { n: "Pistol Squats mit Zusatzgewicht", t: "bwp" },
+      { n: "Rückwärtssalto", t: "bw" }]
   };
   const EX_TYPES = [["w", "Mit Gewicht"], ["bw", "Körpergewicht"], ["bwp", "Körpergewicht + Zusatzgewicht"]];
   const groupCount = g => g.direct ? (EXERCISES[g.id] || []).length : g.muscles.reduce((a, _, i) => a + (EXERCISES[g.id + ":" + i] || []).length, 0);
