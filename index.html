@@ -742,7 +742,7 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
       ["sections", "logs", "picks", "done", "userSplits"].forEach(k => Object.assign(state[k], saved[k] || {}));
       Object.keys(state.picks).filter(k => !k.includes("|")).forEach(k => { state.picks[k + "|" + (saved.split || "ka") + "|" + ((new Date(k + "T00:00:00").getDay() + 6) % 7)] = state.picks[k]; delete state.picks[k]; });
       [["Dauerlauf", "Joggen"], ["Sprints", "Sprinten"], ["Radfahren draußen oder Peloton", "Fahrrad draußen"]].forEach(([o, n]) => { if (state.logs[o]) { state.logs[n] = (state.logs[n] || []).concat(state.logs[o]); delete state.logs[o]; } });
-      if (saved.mode) state.mode = saved.mode; if (saved.split) state.split = saved.split; if (saved.profile) Object.assign(state.profile, saved.profile); if (saved.wo) state.wo = saved.wo; if (saved.routines) state.routines = Object.assign({ warm: [], cool: [] }, saved.routines); if (saved.rpicks) state.rpicks = saved.rpicks; if (saved.userEx) state.userEx = saved.userEx; state.rSeeded = !!saved.rSeeded; state.rSeedWarm1 = !!saved.rSeedWarm1;
+      if (saved.mode) state.mode = saved.mode; if (saved.split) state.split = saved.split; if (saved.profile) Object.assign(state.profile, saved.profile); if (saved.wo) state.wo = saved.wo; if (saved.routines) state.routines = Object.assign({ warm: [], cool: [] }, saved.routines); if (saved.rpicks) state.rpicks = saved.rpicks; if (saved.userEx) state.userEx = saved.userEx; state.rSeeded = !!saved.rSeeded; state.rSeedWarm1 = !!saved.rSeedWarm1; state.rSeedCool1 = !!saved.rSeedCool1;
     } else {
       // Aus der alten Version nur Einstellungen und Profil übernehmen, keine Beispielwerte
       const old = JSON.parse(localStorage.getItem("trainingsapp-proto") || "null");
@@ -759,10 +759,16 @@ html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-bg);
     const ex = state.routines.warm.find(r => r.name === "Erste Routine" && !r.items.length);
     if (ex) ex.items = items; else state.routines.warm.unshift({ id: "rw-erste", name: "Erste Routine", items });
   }
+  // Niks Cooldown-Routinen (14.10.2026), einmalig und vorerst leer anlegen; Inhalt diktiert Nik später
+  if (!state.rSeedCool1) {
+    state.rSeedCool1 = true;
+    ["Cooldown Push", "Cooldown Pull", "Cooldown Arme", "Cooldown Beine", "Cooldown Laufen", "Cooldown Fahrradfahren"].forEach((name, i) => {
+      if (!state.routines.cool.some(r => r.name === name)) state.routines.cool.push({ id: "rc-seed" + i, name, items: [] }); });
+  }
   // Beispielroutinen aus Version 59 wieder entfernen
   state.routines.warm = state.routines.warm.filter(r => r.id !== "rw-beispiel");
   state.routines.cool = state.routines.cool.filter(r => r.id !== "rc-beispiel");
-  function save() { try { localStorage.setItem(STORE, JSON.stringify({ sections: state.sections, logs: state.logs, picks: state.picks, done: state.done, userSplits: state.userSplits, routines: state.routines, rpicks: state.rpicks, userEx: state.userEx, rSeeded: state.rSeeded, rSeedWarm1: state.rSeedWarm1, wo: state.wo, mode: state.mode, split: state.split, profile: state.profile })); } catch (e) {} }
+  function save() { try { localStorage.setItem(STORE, JSON.stringify({ sections: state.sections, logs: state.logs, picks: state.picks, done: state.done, userSplits: state.userSplits, routines: state.routines, rpicks: state.rpicks, userEx: state.userEx, rSeeded: state.rSeeded, rSeedWarm1: state.rSeedWarm1, rSeedCool1: state.rSeedCool1, wo: state.wo, mode: state.mode, split: state.split, profile: state.profile })); } catch (e) {} }
   const secs = k => state.sections[k] || [false, false, false];
   const isDone = k => secs(k).every(Boolean);
 
