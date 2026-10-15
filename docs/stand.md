@@ -104,3 +104,4 @@ Quelldatei: prototyp.html · Übungsdaten: uebungen.json (128 Übungen aus deine
 - v83: Laufen › Joggen: 3/5/8/10/12,5/15 km Joggen (Flag time:true → eine Zeit min:Sek., PR = schnellste); Sprinten: 20/50/100 m Sprint (count: 'Wie viele Sprints?' + Zeit pro Sprint).
 - v84: Gesamtkörper: Kreuzheben (Gewicht), Burpees (KG).
 - v85 (14.10.): Cooldown-Routinen leer angelegt (Flag rSeedCool1): Cooldown Push, Pull, Arme, Beine, Laufen, Fahrradfahren. Inhalt + Zeiten diktiert Nik später.
+- v86 (15.10.): Handy-Ansicht: Leiste unten bündig bis zum Rand (keine dunkle Fläche mehr), oben weniger Abstand (Safe-Area − 12 px, Inhalt ohne Extra-Abstand). Geändert in build.py.
