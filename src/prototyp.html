@@ -1520,12 +1520,17 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     if (m === "newpass") return '<form class="auth" data-a-form="newpass">' + top("Passwort vergessen", "Neues Passwort") + msg +
       '<div class="fields">' + inp("aPass", "Neues Passwort", "password", "new-password", "mindestens 6 Zeichen") + "</div>" +
       '<button type="submit" class="cta">Passwort speichern</button><button type="button" class="linkbtn" data-a-go="login">Zur Anmeldung</button></form>';
-    return '<form class="auth" data-a-form="login">' + '<div class="top auth-welcome"><h2>Willkommen bei<br>Alpha&#8209;Sports</h2><h2>Anmelden</h2></div>' + msg +
+    return '<form class="auth" data-a-form="login">' + '<div class="top auth-welcome"><h2 class="aw-title">Willkommen bei<br>Alpha&#8209;Sports!</h2><h2>Anmelden</h2></div>' + msg +
       '<div class="fields">' + inp("aMail", "E-Mail", "email", "email", "name@beispiel.de", A.email) + inp("aPass", "Passwort", "password", "current-password", "Passwort") + "</div>" +
       '<button type="submit" class="cta">Anmelden</button><button type="button" class="linkbtn" data-a-go="forgot">Passwort vergessen?</button>' +
       '<div class="auth-alt"><span class="hint-sm">Noch kein Konto?</span><button type="button" class="cta ghost" data-a-go="register">Konto erstellen</button></div></form>';
   }
-  function renderAuth() { if (started) return; phoneEl.classList.add("auth"); scr.innerHTML = viewAuth(); scr.scrollTop = 0; }
+  function renderAuth() { if (started) return; phoneEl.classList.add("auth"); scr.innerHTML = viewAuth(); scr.scrollTop = 0; placeWelcome(); }
+  // Begrüßung nach oben schieben: etwas über der Mitte zwischen oberem Rand und „Anmelden“; alles darunter bleibt an seinem Platz
+  function placeWelcome() { const t = scr.querySelector(".aw-title"), a = t && t.nextElementSibling; if (!t || !a) return;
+    t.style.transform = ""; const top = scr.getBoundingClientRect().top, r = t.getBoundingClientRect(), target = (a.getBoundingClientRect().top - top) * 0.42;
+    t.style.transform = "translateY(" + Math.min(0, Math.round(target - (r.top - top + r.height / 2))) + "px)"; }
+  window.addEventListener("resize", placeWelcome);
   const go = (mode, extra) => { Object.assign(A, { mode, err: "", msg: "" }, extra || {}); renderAuth(); };
   const val = id => ((document.getElementById(id) || {}).value || "").trim();
   const busyBtn = f => { const b = f && f.querySelector("[type=submit]"); if (b) { b.disabled = true; b.textContent = "Einen Moment …"; } };
