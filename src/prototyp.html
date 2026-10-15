@@ -412,19 +412,18 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 .hint-sm { font-size: .82rem; color: var(--muted); margin: 0; }
 /* Einführung: Karte über dem Inhalt, der passende Tab unten leuchtet */
 .phone { position: relative; }
-.tut { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; justify-content: flex-end; background: rgba(0, 0, 0, .45); padding: 12px 12px calc(var(--tabh, 74px) + 10px); }
-.tut-card { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 22px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 12px 40px rgba(0, 0, 0, .3); font-family: var(--body); }
-.tut-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tut { position: absolute; inset: 0; z-index: 20; }
+.tut.dim { background: rgba(0, 0, 0, .6); }
+.tut-hole { position: absolute; display: block; padding: 0; border: 0; background: transparent; border-radius: 18px; box-shadow: 0 0 0 2px var(--accent), 0 0 0 9999px rgba(0, 0, 0, .6); }
+.tut-hole.tap { cursor: pointer; animation: tutPulse 1.4s ease-in-out infinite; }
+@keyframes tutPulse { 50% { box-shadow: 0 0 0 5px var(--accent), 0 0 0 9999px rgba(0, 0, 0, .6); } }
+.tut-card { position: absolute; left: 14px; right: 14px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 12px 40px rgba(0, 0, 0, .3); font-family: var(--body); }
+.tut-card p { margin: 0; font-size: 1rem; line-height: 1.4; }
+.tut-foot { display: flex; align-items: center; gap: 10px; }
 .tut-skip { background: none; border: 0; color: var(--muted); font: 600 .82rem var(--body); cursor: pointer; padding: 4px 0; }
-.tut-card h3 { margin: 0; font-family: var(--display); font-size: 1.5rem; }
-.tut-card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; font-size: .92rem; line-height: 1.4; }
-.tut-dots { display: flex; gap: 6px; justify-content: center; }
-.tut-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
-.tut-dots i.on { background: var(--accent); width: 18px; border-radius: 4px; }
-.tut-btns { display: flex; gap: 8px; }
-.tut-btns .cta { flex: 1; }
-.phone.touring .tabbar { position: relative; z-index: 21; pointer-events: none; }
-.phone.touring .tabbar button[aria-current="page"] { background: var(--soft); }
+.tut-n { flex: 1; text-align: center; color: var(--muted); font-size: .8rem; }
+.tut-tap { color: var(--accent); font-weight: 600; font-size: .85rem; }
+.tut-foot .cta { padding: 10px 18px; }
 /* Vorschläge von anderen */
 .sugs { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 18px; background: var(--soft); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); }
 .sug { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; cursor: pointer; }
@@ -1394,23 +1393,69 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   }
   // Neue Vorschläge sind angekommen: Ansicht auffrischen, solange gerade nichts getippt wird
   window.TA_onShared = () => { if (["group", "split", "routines", "split-edit"].includes(state.view) && !state.addEx && !(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName))) render(); };
-  // ===== Kurze Einführung beim ersten Anmelden: ein Schritt pro Tab, unten eingeblendet =====
+  // ===== Einführung beim ersten Anmelden: geführter Rundgang, immer nur die markierte Stelle ist antippbar =====
+  // Schritt: [Ansicht herstellen, Ziel (CSS), Text, 1 = weiter durch Antippen des Ziels (sonst „Weiter“)]. Es wird nichts gespeichert oder gestartet.
+  const tutTrain = () => { for (let i = 0; i < 14; i++) { const p = plan(addDays(today, i)); if (p.type !== "rest") return p.key; } return iso(today); };
+  const TV = (view, more) => () => { state.planBack = false; state.view = view; if (["home", "split", "rahmen", "exercises", "history"].includes(view)) state.tab = view; if (more) more(); };
+  const tDetail = TV("detail", () => { state.tab = "home"; state.detail = tutTrain(); });
+  const tRout = k => TV("routines", () => { state.tab = "rahmen"; state.rKind = k; });
   const TUT = [
-    ["home", "Heute", ["Hier siehst du dein Training für heute mit Aufwärmen, Hauptteil und Cooldown.", "Tippe auf „Training starten“ und geh Schritt für Schritt durch. Deine Sätze werden gespeichert.", "Darunter stehen das Training von morgen, dein nächster Rest Day und der Wochenplan.", "Oben rechts öffnest du dein Profil mit Foto, Gewicht, Größe und Hell- oder Dunkelmodus."]],
-    ["split", "Split", ["Ein Split ist dein Wochenplan, zum Beispiel Kraftausdauer oder Maximalkraft.", "Tippe auf einen Split, schau dir die Woche an und aktiviere ihn.", "Mit „+ Eigenen Split erstellen“ baust du deinen eigenen Plan.", "Splits von anderen findest du darunter als Vorschlag."]],
-    ["rahmen", "Rahmen", ["Hier legst du deine Routinen für Aufwärmen und Cooldown an.", "Jede Übung bekommt eine Zeit in Sekunden, dazu eine Pause zwischen den Übungen.", "Im Training startest du die Routine mit Timer, Ton und Vibration."]],
-    ["exercises", "Training", ["Alle Übungen nach Bereichen: Kraft, Ausdauer und Skills.", "Bei jeder Übung siehst du, was du zuletzt geschafft hast, und deinen PR.", "Mit „+ Übung hinzufügen“ ergänzt du eigene Übungen oder übernimmst Vorschläge von anderen."]],
-    ["history", "Verlauf", ["Hier siehst du, welche Trainings du geschafft und welche du verpasst hast.", "Wechsle oben zwischen Wochen- und Monatsansicht.", "Grün heißt erledigt, rot verpasst. Viel Spaß beim Training!"]]
+    [TV("home"), ".avatar-btn", "Willkommen! Tippe oben rechts auf dein Profil.", 1],
+    [TV("profile"), ".field:has(#pName)", "Hier steht dein Vorname.", 0],
+    [TV("profile"), ".field:has(#pWeight)", "Dein Körpergewicht. Es wird bei Übungen mit Körpergewicht automatisch angezeigt.", 0],
+    [TV("profile"), ".field:has(#pHeight)", "Deine Körpergröße.", 0],
+    [TV("profile"), ".modepick", "Hier wählst du Hellmodus, Dunkelmodus oder wie dein Handy.", 0],
+    [TV("profile"), ".acct", "Hier meldest du dich ab.", 0],
+    [TV("profile"), ".back", "Tippe auf Zurück.", 1],
+    [TV("home"), ".today", () => plan(today).type === "rest" ? "Heute ist Rest Day. Tippe trotzdem drauf, dann schauen wir uns dein nächstes Training an." : "Das ist dein Training für heute. Tippe drauf.", 1],
+    [tDetail, ".ph-w", "Jedes Training hat drei Teile. Tippe auf Aufwärmen.", 1],
+    [tDetail, ".ph-w ul", "Hier wählst du deine Aufwärm-Routine. Im Training läuft sie mit Timer.", 0],
+    [tDetail, ".ph-m", "Tippe auf den Hauptteil.", 1],
+    [tDetail, ".ph-m ul", "Hier wählst du pro Bereich deine Übungen und trägst deine Sätze ein.", 0],
+    [tDetail, ".ph-c", "Tippe auf Cooldown.", 1],
+    [tDetail, ".ph-c ul", "Hier wählst du deine Cooldown-Routine.", 0],
+    [tDetail, ".cta.finish", "Hier startest du das Training. Am Ende schließt du es ab und es landet im Verlauf.", 0],
+    [tDetail, ".back", "Tippe auf Zurück.", 1],
+    [TV("home"), ".duo .mini:first-child", "Hier siehst du, was morgen dran ist.", 0],
+    [TV("home"), ".duo .mini:last-child", "Und wann dein nächster Rest Day ist.", 0],
+    [TV("home"), ".weekcard", "Tippe auf den Wochenplan.", 1],
+    [TV("plan", () => { state.tab = "home"; state.weekOffset = 0; }), ".plist", "Hier siehst du deine ganze Woche.", 0],
+    [TV("plan", () => { state.tab = "home"; }), ".back", "Tippe auf Zurück.", 1],
+    [TV("home"), '.tabbar [data-tab="split"]', "Tippe unten auf Split.", 1],
+    [TV("split"), ".split-new", "Aktiviere einen fertigen Split, indem du ihn antippst, oder erstelle hier deinen eigenen.", 0],
+    [TV("split"), '.tabbar [data-tab="rahmen"]', "Tippe unten auf Rahmen.", 1],
+    [TV("rahmen"), '[data-rkind="warm"]', "Tippe auf Aufwärmen.", 1],
+    [tRout("warm"), "[data-rnew]", "Hier erstellst du deine eigene Aufwärm-Routine mit Übungen und Sekunden.", 0],
+    [tRout("warm"), ".back", "Tippe auf Zurück.", 1],
+    [TV("rahmen"), '[data-rkind="cool"]', "Tippe auf Cooldown.", 1],
+    [tRout("cool"), "[data-rnew]", "Genauso legst du hier deine Cooldown-Routinen an.", 0],
+    [tRout("cool"), ".back", "Tippe auf Zurück.", 1],
+    [TV("rahmen"), '.tabbar [data-tab="exercises"]', "Tippe unten auf Training.", 1],
+    [TV("exercises"), null, "Hier findest du alle Übungen für Kraft, Ausdauer und Skills. Überall kannst du eigene Übungen hinzufügen oder Vorschläge von anderen übernehmen.", 0],
+    [TV("exercises"), '.tabbar [data-tab="history"]', "Tippe unten auf Verlauf.", 1],
+    [TV("history", () => { state.histMode = "week"; state.histOffset = 0; }), '[data-hmode="week"]', "In der Wochenansicht siehst du, welche Trainings du diese Woche geschafft hast.", 0],
+    [TV("history", () => { state.histMode = "month"; state.monthOffset = 0; }), '[data-hmode="month"]', "In der Monatsansicht siehst du den ganzen Monat: grün geschafft, rot verpasst. Viel Spaß beim Training!", 0]
   ];
-  function tutGo(i) { state.tut = i; const t = TUT[i][0]; state.planBack = false; state.tab = state.view = t; state.histMode = "week"; render(); screen.scrollTop = 0; }
-  function tutEnd() { state.tut = null; state.tutDone = true; state.tab = state.view = "home"; save(); render(); screen.scrollTop = 0; }
+  // Schritte ohne Ziel auf dem Bildschirm (z. B. Abmelden in der Vorschau) werden übersprungen
+  function tutGo(i) { for (; i < TUT.length; i++) { state.tut = i; TUT[i][0](); screen.scrollTop = 0; render(); if (!TUT[i][1] || phone.querySelector(TUT[i][1])) return; } tutEnd(); }
+  function tutEnd() { state.tut = null; state.tutDone = true; state.tab = state.view = "home"; state.histMode = "week"; save(); render(); screen.scrollTop = 0; }
   function tutOverlay() {
-    const i = state.tut, [, name, lines] = TUT[i], last = i === TUT.length - 1;
-    return '<div class="tut" role="dialog" aria-label="Einführung"><div class="tut-card">' +
-      '<div class="tut-head"><span class="label">Kurze Einführung · ' + (i + 1) + " von " + TUT.length + '</span><button type="button" class="tut-skip" data-tutskip>Überspringen</button></div>' +
-      "<h3>" + name + "</h3><ul>" + lines.map(l => "<li>" + l + "</li>").join("") + "</ul>" +
-      '<div class="tut-dots">' + TUT.map((_, j) => '<i class="' + (j === i ? "on" : "") + '"></i>').join("") + "</div>" +
-      '<div class="tut-btns">' + (i ? '<button type="button" class="cta ghost" data-tutprev>Zurück</button>' : "") + '<button type="button" class="cta" data-tutnext>' + (last ? "Los geht's" : "Weiter") + "</button></div></div></div>";
+    const [, sel, txt, tap] = TUT[state.tut], el = sel && phone.querySelector(sel), last = state.tut === TUT.length - 1;
+    const W = phone.clientWidth, H = phone.clientHeight, P = phone.getBoundingClientRect();
+    let hole = "", pos = "top:50%;transform:translateY(-50%)";
+    if (el) {
+      // Ziel in den sichtbaren Bereich holen (nur scrollen, wenn es von oben nicht ganz zu sehen ist)
+      if (screen.contains(el)) { const sr = screen.getBoundingClientRect(), er = el.getBoundingClientRect(), y = er.top - sr.top + screen.scrollTop;
+        screen.scrollTop = y + er.height <= sr.height - 16 ? 0 : y - Math.max(16, (sr.height - er.height) / 2); }
+      const b = el.getBoundingClientRect(), pad = 6, x = b.left - P.left - phone.clientLeft - pad, y = b.top - P.top - phone.clientTop - pad, w = b.width + 2 * pad, h = b.height + 2 * pad;
+      const st = ' style="left:' + Math.max(2, x) + "px;top:" + y + "px;width:" + Math.min(w, W - 4 - Math.max(2, x)) + "px;height:" + h + 'px"';
+      hole = tap ? '<button type="button" class="tut-hole tap" data-tuthit aria-label="Weiter"' + st + "></button>" : '<div class="tut-hole"' + st + "></div>";
+      pos = y + h / 2 > H / 2 ? "bottom:" + Math.max(12, H - y + 12) + "px" : "top:" + Math.min(H - 180, y + h + 12) + "px";
+    }
+    return '<div class="tut' + (el ? "" : " dim") + '" role="dialog" aria-label="Einführung">' + hole + '<div class="tut-card" style="' + pos + '">' +
+      "<p>" + (typeof txt === "function" ? txt() : txt) + "</p>" +
+      '<div class="tut-foot"><button type="button" class="tut-skip" data-tutskip>Überspringen</button><span class="tut-n">' + (state.tut + 1) + " / " + TUT.length + "</span>" +
+      (tap ? '<span class="tut-tap">Tippe auf die Markierung</span>' : '<button type="button" class="cta" data-tutnext>' + (last ? "Fertig" : "Weiter") + "</button>") + "</div></div></div>";
   }
   const screen = document.getElementById("screen"), phone = document.getElementById("phone");
   // Routine abspielen: Übung mit Timer, dazwischen die Pause der Routine (Standard 10 Sekunden) mit Vorschau auf die nächste Übung
@@ -1455,7 +1500,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     { const av = screen.querySelector(".avatar-btn"), h = screen.querySelector(".top h2"); if (av && h) av.style.top = Math.round(h.offsetTop - 12) + "px"; }
     document.querySelectorAll(".tabbar [data-tab]").forEach(b => { if (b.dataset.tab === state.tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     phone.classList.toggle("touring", state.tut != null); const old = phone.querySelector(".tut"); if (old) old.remove();
-    if (state.tut != null) { phone.style.setProperty("--tabh", (phone.querySelector(".tabbar") || {}).offsetHeight + "px"); phone.insertAdjacentHTML("beforeend", tutOverlay()); }
+    if (state.tut != null) phone.insertAdjacentHTML("beforeend", tutOverlay());
   }
 
   document.addEventListener("input", e => {
@@ -1488,6 +1533,10 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const el = e.target.closest("button"); if (!el) return;
     if (el.dataset.modeBtn) { state.mode = el.dataset.modeBtn; save(); render(); return; }
     if (!phone.contains(el)) return;
+    if ("tutnext" in el.dataset || "tuthit" in el.dataset) { if (state.tut >= TUT.length - 1) tutEnd(); else tutGo(state.tut + 1); return; }
+    if ("tutskip" in el.dataset) { tutEnd(); return; }
+    if ("tutstart" in el.dataset) { tutGo(0); return; }
+    if (state.tut != null) return;
     if (el.dataset.sugopen) { state.sugId = el.dataset.sugopen; state.sugFrom = state.view; state.sugFill = state.view === "routine" ? state.rId : null; state.view = "sug"; render(); screen.scrollTop = 0; return; }
     if ("sugback" in el.dataset) { state.view = state.sugFrom || "split"; render(); screen.scrollTop = 0; return; }
     if (el.dataset.sugtake) { const d = SHARED().find(x => x.id === el.dataset.sugtake); if (d) takeSug(d); return; }
@@ -1522,11 +1571,6 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     if ("openplan" in el.dataset) { state.tab = "home"; state.view = "plan"; state.weekOffset = 0; state.planBack = true; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "plan") { state.planBack = false; state.view = "home"; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "detail" && state.planBack) { state.view = "plan"; render(); screen.scrollTop = 0; return; }
-    if ("tutnext" in el.dataset) { if (state.tut >= TUT.length - 1) tutEnd(); else tutGo(state.tut + 1); return; }
-    if ("tutprev" in el.dataset) { tutGo(Math.max(0, state.tut - 1)); return; }
-    if ("tutskip" in el.dataset) { tutEnd(); return; }
-    if ("tutstart" in el.dataset) { tutGo(0); return; }
-    if (state.tut != null) return;
     if (el.dataset.tab) { state.planBack = false; state.tab = state.view = el.dataset.tab; state.weekOffset = 0; state.histOffset = 0; render(); screen.scrollTop = 0; return; }
     if (el.dataset.open) { state.detail = el.dataset.open; state.view = "detail"; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "day-edit") { state.view = "split-edit"; render(); screen.scrollTop = 0; return; }
@@ -1591,6 +1635,8 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 
   const now = new Date(); document.getElementById("clock").textContent = now.getHours() + ":" + String(now.getMinutes()).padStart(2, "0");
   // Einführung beim ersten Anmelden (nur mit Konten, nicht in der Vorschau)
+  window.addEventListener("resize", () => { if (state.tut != null) render(); });
+  if (document.fonts) document.fonts.ready.then(() => { if (state.tut != null) render(); });
   if (window.TA_logout && !state.tutDone) tutGo(0); else render();
   };
   // ===== Konten (Firebase): erst anmelden, dann startet die App mit den Daten dieses Kontos =====
