@@ -1,4 +1,4 @@
-<title>TrainingsApp Prototyp</title>
+<title>Alpha-Sports Prototyp</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=Figtree:wght@400;500;600;700&display=swap">
@@ -1487,7 +1487,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 
   function startApp(key) { started = true; window.TA_STORE = key; phoneEl.classList.remove("auth"); window.TA_start(); }
   // Erst einschalten, wenn in Firebase Anmeldung (E-Mail/Passwort) und Firestore eingerichtet sind
-  const AUTH_ON = false;
+  const AUTH_ON = true;
   if (!AUTH_ON || !FIREBASE_CONFIG || window.TA_DEMO) { startApp(LEGACY); return; }
 
   const ERR = { "auth/email-already-in-use": "Mit dieser E-Mail gibt es schon ein Konto. Melde dich an.", "auth/invalid-email": "Die E-Mail-Adresse stimmt nicht.", "auth/weak-password": "Das Passwort braucht mindestens 6 Zeichen.",
@@ -1500,8 +1500,8 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const top = (sub, h) => '<div class="top"><span class="date">' + sub + "</span><h2>" + h + "</h2></div>";
     const inp = (id, label, type, ac, ph, val) => '<div class="field fcol"><label for="' + id + '">' + label + '</label><input id="' + id + '" class="tin" type="' + type + '" autocomplete="' + ac + '"' + (type === "email" ? ' autocapitalize="off" spellcheck="false"' : "") + ' placeholder="' + ph + '" value="' + escA(val || "") + '"></div>';
     const num = (id, label, unit, mode) => '<div class="field"><label for="' + id + '">' + label + '</label><span class="inp"><input id="' + id + '" type="number" inputmode="' + mode + '" placeholder="–">' + unit + "</span></div>";
-    if (m === "loading") return '<div class="auth">' + top("TrainingsApp", "Einen Moment …") + "</div>";
-    if (m === "offline") return '<div class="auth">' + top("TrainingsApp", "Keine Verbindung") + '<p class="hint-sm">Zum ersten Anmelden braucht die App Internet. Prüfe deine Verbindung.</p>' + msg + '<button type="button" class="cta" data-a-reload>Nochmal versuchen</button></div>';
+    if (m === "loading") return '<div class="auth">' + top("Alpha-Sports", "Einen Moment …") + "</div>";
+    if (m === "offline") return '<div class="auth">' + top("Alpha-Sports", "Keine Verbindung") + '<p class="hint-sm">Zum ersten Anmelden braucht die App Internet. Prüfe deine Verbindung.</p>' + msg + '<button type="button" class="cta" data-a-reload>Nochmal versuchen</button></div>';
     if (m === "register") return '<form class="auth" data-a-form="register">' + top("Neues Konto", "Registrieren") + msg +
       '<div class="fields">' + inp("aName", "Vorname", "text", "given-name", "z. B. Nik", A.name) + inp("aMail", "E-Mail", "email", "email", "name@beispiel.de", A.email) + inp("aPass", "Passwort", "password", "new-password", "mindestens 6 Zeichen") + "</div>" +
       '<div class="fields">' + num("aWeight", "Körpergewicht", "kg", "decimal") + num("aHeight", "Körpergröße", "cm", "numeric") + "</div>" +
@@ -1519,7 +1519,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     if (m === "newpass") return '<form class="auth" data-a-form="newpass">' + top("Passwort vergessen", "Neues Passwort") + msg +
       '<div class="fields">' + inp("aPass", "Neues Passwort", "password", "new-password", "mindestens 6 Zeichen") + "</div>" +
       '<button type="submit" class="cta">Passwort speichern</button><button type="button" class="linkbtn" data-a-go="login">Zur Anmeldung</button></form>';
-    return '<form class="auth" data-a-form="login">' + top("Willkommen", "Anmelden") + msg +
+    return '<form class="auth" data-a-form="login">' + top("Willkommen bei Alpha-Sports", "Anmelden") + msg +
       '<div class="fields">' + inp("aMail", "E-Mail", "email", "email", "name@beispiel.de", A.email) + inp("aPass", "Passwort", "password", "current-password", "Passwort") + "</div>" +
       '<button type="submit" class="cta">Anmelden</button><button type="button" class="linkbtn" data-a-go="forgot">Passwort vergessen?</button>' +
       '<div class="auth-alt"><span class="hint-sm">Noch kein Konto?</span><button type="button" class="cta ghost" data-a-go="register">Konto erstellen</button></div></form>';

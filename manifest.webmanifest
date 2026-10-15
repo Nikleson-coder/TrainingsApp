@@ -1,6 +1,6 @@
 {
-  "name": "TrainingsApp",
-  "short_name": "Training",
+  "name": "Alpha-Sports",
+  "short_name": "Alpha-Sports",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
