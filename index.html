@@ -157,7 +157,9 @@ button { font-family: inherit; }
 .phase.done .check { background: var(--ok); border-color: var(--ok); color: #fff; }
 .phase.done ul { opacity: .55; }
 .finish { width: 100%; padding: 14px; font-size: 1rem; }
-.finish.is-done { background: var(--soft); color: var(--ok); }
+.finish.is-done { background: var(--soft); color: var(--ok); cursor: default; text-align: center; }
+.finish.is-reset { background: color-mix(in srgb, var(--miss) 16%, transparent); color: var(--miss); margin-top: -8px; }
+.finish.is-reset.armed { background: color-mix(in srgb, var(--miss) 30%, transparent); }
 .restbox { background: var(--rest-soft); color: var(--fg); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
 
 /* Verlauf */
@@ -925,7 +927,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const running = woIs(p.key, state.split, wd(d));
     return back + '<div class="dhead t-' + p.type + '"><span class="chip" style="align-self:flex-start">' + TYPE_LABEL[p.type] + " · " + total(p) + " Min</span><h2>" + esc(p.title) + '</h2><div class="sub">' + esc(p.sub) + " · " + dateLine + "</div>" + phasebar(p) + "</div>" +
       phaseCards(p, state.split, wd(d), s, done ? iso(addDays(d, 1)) : p.key, p.key, p.key) +
-      (done ? '<button type="button" class="cta finish is-done" data-finish>✓ Training abgeschlossen</button>'
+      (done ? '<div class="cta finish is-done" aria-disabled="true">✓ Training abgeschlossen</div><button type="button" class="cta finish is-reset" data-wreset>Training zurücksetzen</button>'
         : '<button type="button" class="cta finish" data-start data-wkey="' + p.key + '" data-wsplit="' + state.split + '" data-wday="' + wd(d) + '">' + (running ? "Training fortsetzen" : "Training starten") + "</button>");
   }
   // Drei Abschnitte mit Übungsliste; s = abgehakte Abschnitte (null = Vorlage ohne Haken)
@@ -1455,7 +1457,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     if (el.dataset.wchoose) { const sk = state.wo.at.split(":").slice(1).join(":"); state.wo.slots[sk] = { n: el.dataset.wchoose, done: false }; state.wo.at = "ex:" + sk; save(); render(); screen.scrollTop = 0; return; }
     if ("wslotdone" in el.dataset) {
       const wo = state.wo, sk = wo.at.slice(3), g = sk.split(":")[0], B = blocksOf(wo.split, wo.day); wo.slots[sk].done = true;
-      wo.at = "group:" + g; save(); render(); screen.scrollTop = 0; return;
+      wo.at = "hub"; save(); render(); screen.scrollTop = 0; return;
     }
     if ("wdone" in el.dataset) { finishWorkout(); render(); screen.scrollTop = 0; return; }
     if (el.dataset.exfilter) { state.exFilter = el.dataset.exfilter; render(); return; }
@@ -1471,7 +1473,9 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     if (el.dataset.hweek) { state.histOffset = Math.min(0, state.histOffset + Number(el.dataset.hweek)); render(); return; }
     if (el.dataset.week) { state.weekOffset += Number(el.dataset.week); render(); return; }
     if (el.dataset.sec) { const s = secs(state.detail).slice(); s[+el.dataset.sec] = !s[+el.dataset.sec]; state.sections[state.detail] = s; save(); render(); return; }
-    if ("finish" in el.dataset) { const all = !isDone(state.detail); state.sections[state.detail] = [all, all, all]; save(); render(); return; }
+    // Abgeschlossenes Training nur über „Training zurücksetzen“ (zweimal tippen) wieder öffnen; gespeicherte Sätze bleiben im Verlauf
+    if ("wreset" in el.dataset) { if (!el.dataset.armed) { el.dataset.armed = "1"; el.textContent = "Wirklich zurücksetzen? Nochmal tippen"; el.classList.add("armed"); return; }
+      const k = state.detail; state.sections[k] = [false, false, false]; if (state.done) Object.keys(state.done).forEach(x => { if (x.startsWith(k + "|")) delete state.done[x]; }); save(); render(); return; }
   });
 
   const now = new Date(); document.getElementById("clock").textContent = now.getHours() + ":" + String(now.getMinutes()).padStart(2, "0");

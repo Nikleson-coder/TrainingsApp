@@ -110,3 +110,4 @@ Quelldatei: prototyp.html · Übungsdaten: uebungen.json (128 Übungen aus deine
 - v89 (15.10.): Tab-Leiste höher über dem iPhone-Home-Strich (oben/unten je Safe-Area − 16 px, ca. 18 px), oben wieder etwas mehr Abstand (Safe-Area − 2 px).
 - v90 (15.10.): Überschriften von Split, Rahmen, Training auf gleicher Höhe wie „Hallo Nik“ (leere Datumszeile darüber); Profilbild richtet sich per JS an der Überschrift aus (im Verlauf tiefer, neben „Verlauf“).
 - v91 (15.10.): Routine-Player: Geschafft-Haken ohne schwarze Füllung, größer (140 px) und dicker; Button nur „Nächste Übung“ (ohne Pfeil).
+- v92 (15.10.): Nach „Übung abschließen“ direkt zurück zum Hauptteil. „Training abgeschlossen“ nicht mehr antippbar; darunter rötlich „Training zurücksetzen“ (zweimal tippen), erscheint nur bei abgeschlossenem Training; eingetragene Sätze bleiben gespeichert.
