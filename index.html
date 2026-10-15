@@ -423,6 +423,18 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 .field input { width: 5.5rem; font: 600 1rem var(--body); text-align: right; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-variant-numeric: tabular-nums; }
 .field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .hint-sm { font-size: .82rem; color: var(--muted); margin: 0; }
+/* Anmeldung und Registrierung */
+.phone.auth .tabbar { display: none; }
+.auth { display: flex; flex-direction: column; gap: 14px; padding-bottom: 28px; }
+.auth .cta { width: 100%; }
+.auth .linkbtn { align-self: center; padding: 2px 0; }
+.auth-text { margin: 0; line-height: 1.5; }
+.auth-msg { padding: 10px 14px; border-radius: 12px; font-size: .9rem; line-height: 1.4; }
+.auth-msg.err { color: var(--miss); background: color-mix(in srgb, var(--miss) 13%, transparent); }
+.auth-msg.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 13%, transparent); }
+.auth-alt { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 10px; padding-top: 18px; border-top: 1px solid var(--line); }
+.field input.pname { width: 9rem; text-align: right; }
+.acct { display: flex; flex-direction: column; gap: 10px; }
 @media (max-width: 440px) { .avatar-btn { right: 14px; } }
 
 @media (prefers-reduced-motion: no-preference) {
@@ -483,6 +495,8 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
 
 <script>
 (function () {
+  // Die eigentliche App; startet erst nach der Anmeldung (siehe „Konten“ unten)
+  window.TA_start = function () {
   const S = (title, sub, dur) => ({ type: "strength", title, sub, dur });
   const R = (title, sub, dur) => ({ type: "run", title, sub, dur });
   const REST = { type: "rest" };
@@ -739,8 +753,8 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
   // Zustand: abgeschlossene Abschnitte je Tag
   // logs: je Übung Liste von Einheiten { d: "JJJJ-MM-TT", split, sets: [{ kg, reps } | { km, min } | { m, s }] }
   // wo: laufendes Training { key, split, day, step, data: { Übung: { n: Satzanzahl, sets: [...] } } }
-  const state = { view: "home", tab: "home", detail: null, weekOffset: 0, mode: "auto", split: "ka", splitDetail: null, tplDay: null, group: null, muscle: null, histOffset: 0, histMode: "week", monthOffset: 0, profile: { photo: "", weight: "", height: "" }, exFilter: "all", sections: {}, logs: {}, picks: {}, done: {}, userSplits: {}, routines: { warm: [], cool: [] }, rpicks: {}, userEx: {}, addEx: false, addExType: "w", rSeeded: false, rKind: "warm", rId: null, draft: null, draftDay: 0, wo: null };
-  const STORE = "trainingsapp-v2";
+  const state = { view: "home", tab: "home", detail: null, weekOffset: 0, mode: "auto", split: "ka", splitDetail: null, tplDay: null, group: null, muscle: null, histOffset: 0, histMode: "week", monthOffset: 0, profile: { name: "", photo: "", weight: "", height: "" }, exFilter: "all", sections: {}, logs: {}, picks: {}, done: {}, userSplits: {}, routines: { warm: [], cool: [] }, rpicks: {}, userEx: {}, addEx: false, addExType: "w", rSeeded: false, rKind: "warm", rId: null, draft: null, draftDay: 0, wo: null };
+  const STORE = window.TA_STORE || "trainingsapp-v2";
   try {
     const saved = JSON.parse(localStorage.getItem(STORE) || "null");
     if (saved) {
@@ -773,7 +787,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
   // Beispielroutinen aus Version 59 wieder entfernen
   state.routines.warm = state.routines.warm.filter(r => r.id !== "rw-beispiel");
   state.routines.cool = state.routines.cool.filter(r => r.id !== "rc-beispiel");
-  function save() { try { localStorage.setItem(STORE, JSON.stringify({ sections: state.sections, logs: state.logs, picks: state.picks, done: state.done, userSplits: state.userSplits, routines: state.routines, rpicks: state.rpicks, userEx: state.userEx, rSeeded: state.rSeeded, rSeedWarm1: state.rSeedWarm1, rSeedCool1: state.rSeedCool1, wo: state.wo, mode: state.mode, split: state.split, profile: state.profile })); } catch (e) {} }
+  function save() { try { const json = JSON.stringify({ savedAt: Date.now(), sections: state.sections, logs: state.logs, picks: state.picks, done: state.done, userSplits: state.userSplits, routines: state.routines, rpicks: state.rpicks, userEx: state.userEx, rSeeded: state.rSeeded, rSeedWarm1: state.rSeedWarm1, rSeedCool1: state.rSeedCool1, wo: state.wo, mode: state.mode, split: state.split, profile: state.profile }); localStorage.setItem(STORE, json); if (window.TA_cloud) window.TA_cloud(json); } catch (e) {} }
   const secs = k => state.sections[k] || [false, false, false];
   const isDone = k => secs(k).every(Boolean);
 
@@ -806,7 +820,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const days = Array.from({ length: 7 }, (_, i) => plan(addDays(mon, i))).map(p =>
       '<span class="day t-' + p.type + (p.key === iso(today) ? " is-today" : "") + (p.type !== "rest" && isDone(p.key) ? " done" : "") + '">' +
       '<span class="wd">' + fmt(p.date, { weekday: "short" }).replace(".", "") + '</span><span class="num">' + p.date.getDate() + '</span><span class="dot"></span></span>').join("");
-    return '<div class="top"><span class="date">' + fmt(today, { weekday: "long", day: "numeric", month: "long" }) + '</span><h2>Hallo Nik</h2></div>' +
+    return '<div class="top"><span class="date">' + fmt(today, { weekday: "long", day: "numeric", month: "long" }) + '</span><h2>Hallo ' + esc(state.profile.name || "Nik") + "</h2></div>" +
       '<button type="button" class="link split-cur" data-tab="split" style="align-self:flex-start">Aktueller Split: <b>' + splitById(state.split).name + ' ›</b></button>' +
       todayCard +
       '<div class="duo">' +
@@ -1286,16 +1300,18 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
   function viewProfile() {
     const pr = state.profile;
     return '<button type="button" class="back" data-back>‹ Zurück</button>' +
-      '<div class="top"><span class="date">Persönliche Daten</span><h2>Nik</h2></div>' +
+      '<div class="top"><span class="date">Persönliche Daten</span><h2>' + (esc(pr.name) || "Profil") + "</h2></div>" +
       '<div class="profile-photo"><div class="avatar avatar-lg" id="avatarLg">' + avatarInner() + '</div><div class="photo-actions">' +
       '<label for="photoInput">' + (pr.photo ? "Foto ändern" : "Foto auswählen") + '</label><input type="file" id="photoInput" accept="image/*" hidden>' +
       (pr.photo ? '<button type="button" data-photo-remove>Entfernen</button>' : "") + "</div></div>" +
       '<div class="fields">' +
+      (window.TA_logout ? '<div class="field"><label for="pName">Vorname</label><span class="inp"><input id="pName" class="pname" type="text" autocomplete="given-name" placeholder="Vorname" value="' + esc(pr.name) + '" data-pfield="name"></span></div>' : "") +
       '<div class="field"><label for="pWeight">Körpergewicht</label><span class="inp"><input id="pWeight" type="number" inputmode="decimal" min="30" max="250" step="0.1" placeholder="–" value="' + esc(pr.weight) + '" data-pfield="weight">kg</span></div>' +
       '<div class="field"><label for="pHeight">Körpergröße</label><span class="inp"><input id="pHeight" type="number" inputmode="numeric" min="100" max="230" step="1" placeholder="–" value="' + esc(pr.height) + '" data-pfield="height">cm</span></div></div>' +
       '<p class="hint-sm">Dein Körpergewicht wird automatisch bei Übungen mit Körpergewicht angezeigt, z. B. bei Klimmzügen. Weitere Angaben ergänzen wir später.</p>' +
       '<span class="label">Darstellung</span><div class="hmode modepick" role="group" aria-label="Darstellung">' + [["light", "Hellmodus"], ["dark", "Dunkelmodus"], ["auto", "Wie Handy"]].map(([k, l]) =>
-        '<button type="button" data-mode-btn="' + k + '" aria-pressed="' + (state.mode === k) + '">' + l + "</button>").join("") + "</div>";
+        '<button type="button" data-mode-btn="' + k + '" aria-pressed="' + (state.mode === k) + '">' + l + "</button>").join("") + "</div>" +
+      (window.TA_logout ? '<span class="label">Konto</span><div class="acct"><span class="hint-sm">Angemeldet als ' + esc(window.TA_email()) + '</span><button type="button" class="cta ghost" data-logout>Abmelden</button></div>' : "");
   }
   function loadBox(id, note) {
     const sp = splitById(id), L = sp.load || LOAD[id] || [];
@@ -1462,6 +1478,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     if ("wdone" in el.dataset) { finishWorkout(); render(); screen.scrollTop = 0; return; }
     if (el.dataset.exfilter) { state.exFilter = el.dataset.exfilter; render(); return; }
     if ("profile" in el.dataset) { state.view = "profile"; render(); screen.scrollTop = 0; return; }
+    if ("logout" in el.dataset) { el.textContent = "Einen Moment …"; window.TA_logout(); return; }
     if ("photoRemove" in el.dataset) { state.profile.photo = ""; save(); render(); return; }
     if (el.dataset.cardio) { state.group = el.dataset.cardio; state.view = "cardio"; render(); screen.scrollTop = 0; return; }
     if (el.dataset.group) { state.group = el.dataset.group; state.addEx = false; state.view = "group"; render(); screen.scrollTop = 0; return; }
@@ -1480,6 +1497,164 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
 
   const now = new Date(); document.getElementById("clock").textContent = now.getHours() + ":" + String(now.getMinutes()).padStart(2, "0");
   render();
+  };
+  // ===== Konten (Firebase): erst anmelden, dann startet die App mit den Daten dieses Kontos =====
+  // Ohne FIREBASE_CONFIG (z. B. in der Vorschau) startet die App direkt wie bisher.
+  const FIREBASE_CONFIG = null;
+  const FB = "https://www.gstatic.com/firebasejs/10.14.1/", APP_URL = location.origin + location.pathname;
+  const LAST_UID = "trainingsapp-uid", CLAIMED = "trainingsapp-claimed", LEGACY = "trainingsapp-v2";
+  const phoneEl = document.getElementById("phone"), scr = document.getElementById("screen");
+  const escA = s => String(s == null ? "" : s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  let auth = null, db = null, started = false, uid = null;
+  const A = { mode: "loading", msg: "", err: "", email: "", code: "" };
+
+  function startApp(key) { started = true; window.TA_STORE = key; phoneEl.classList.remove("auth"); window.TA_start(); }
+  if (!FIREBASE_CONFIG || window.TA_DEMO) { startApp(LEGACY); return; }
+
+  const ERR = { "auth/email-already-in-use": "Mit dieser E-Mail gibt es schon ein Konto. Melde dich an.", "auth/invalid-email": "Die E-Mail-Adresse stimmt nicht.", "auth/weak-password": "Das Passwort braucht mindestens 6 Zeichen.",
+    "auth/invalid-credential": "E-Mail oder Passwort stimmt nicht.", "auth/wrong-password": "E-Mail oder Passwort stimmt nicht.", "auth/user-not-found": "E-Mail oder Passwort stimmt nicht.", "auth/missing-password": "Bitte gib dein Passwort ein.",
+    "auth/too-many-requests": "Zu viele Versuche. Warte kurz und versuch es dann nochmal.", "auth/network-request-failed": "Keine Internetverbindung.", "auth/expired-action-code": "Der Link ist abgelaufen. Fordere einen neuen an.", "auth/invalid-action-code": "Der Link wurde schon benutzt oder ist abgelaufen." };
+  const errText = e => ERR[e && e.code] || "Das hat nicht geklappt. Versuch es bitte nochmal.";
+
+  function viewAuth() {
+    const m = A.mode, msg = (A.err ? '<div class="auth-msg err">' + escA(A.err) + "</div>" : "") + (A.msg ? '<div class="auth-msg ok">' + A.msg + "</div>" : "");
+    const top = (sub, h) => '<div class="top"><span class="date">' + sub + "</span><h2>" + h + "</h2></div>";
+    const inp = (id, label, type, ac, ph, val) => '<div class="field fcol"><label for="' + id + '">' + label + '</label><input id="' + id + '" class="tin" type="' + type + '" autocomplete="' + ac + '"' + (type === "email" ? ' autocapitalize="off" spellcheck="false"' : "") + ' placeholder="' + ph + '" value="' + escA(val || "") + '"></div>';
+    const num = (id, label, unit, mode) => '<div class="field"><label for="' + id + '">' + label + '</label><span class="inp"><input id="' + id + '" type="number" inputmode="' + mode + '" placeholder="–">' + unit + "</span></div>";
+    if (m === "loading") return '<div class="auth">' + top("TrainingsApp", "Einen Moment …") + "</div>";
+    if (m === "offline") return '<div class="auth">' + top("TrainingsApp", "Keine Verbindung") + '<p class="hint-sm">Zum ersten Anmelden braucht die App Internet. Prüfe deine Verbindung.</p>' + msg + '<button type="button" class="cta" data-a-reload>Nochmal versuchen</button></div>';
+    if (m === "register") return '<form class="auth" data-a-form="register">' + top("Neues Konto", "Registrieren") + msg +
+      '<div class="fields">' + inp("aName", "Vorname", "text", "given-name", "z. B. Nik", A.name) + inp("aMail", "E-Mail", "email", "email", "name@beispiel.de", A.email) + inp("aPass", "Passwort", "password", "new-password", "mindestens 6 Zeichen") + "</div>" +
+      '<div class="fields">' + num("aWeight", "Körpergewicht", "kg", "decimal") + num("aHeight", "Körpergröße", "cm", "numeric") + "</div>" +
+      '<button type="submit" class="cta">Registrieren</button><button type="button" class="linkbtn" data-a-go="login">Ich habe schon ein Konto</button></form>';
+    if (m === "sent") return '<div class="auth">' + top("Fast geschafft", "Schau in deine Mails") + msg +
+      '<p class="auth-text">Wir haben dir eine Mail an <b>' + escA(A.email) + "</b> geschickt. Tippe auf den Link in der Mail und melde dich danach hier mit deiner E-Mail und deinem Passwort an.</p>" +
+      '<p class="hint-sm">Keine Mail da? Schau auch im Spam-Ordner nach.</p><button type="button" class="cta" data-a-go="login">Zur Anmeldung</button></div>';
+    if (m === "verify") return '<div class="auth">' + top("Fast geschafft", "E-Mail bestätigen") + msg +
+      '<p class="auth-text">Bitte bestätige zuerst deine E-Mail-Adresse <b>' + escA(A.email) + "</b>. Den Link dazu findest du in der Mail, die wir dir geschickt haben.</p>" +
+      '<button type="button" class="cta" data-a-check>Ich habe bestätigt</button><button type="button" class="cta ghost" data-a-resend>Mail nochmal senden</button><button type="button" class="linkbtn" data-a-go="login">Zurück zur Anmeldung</button></div>';
+    if (m === "forgot") return '<form class="auth" data-a-form="forgot">' + top("Passwort vergessen", "Neues Passwort") + msg +
+      '<p class="hint-sm">Gib deine E-Mail ein. Wir schicken dir einen Link, mit dem du ein neues Passwort festlegst.</p>' +
+      '<div class="fields">' + inp("aMail", "E-Mail", "email", "email", "name@beispiel.de", A.email) + "</div>" +
+      '<button type="submit" class="cta">Link senden</button><button type="button" class="linkbtn" data-a-go="login">Zurück zur Anmeldung</button></form>';
+    if (m === "newpass") return '<form class="auth" data-a-form="newpass">' + top("Passwort vergessen", "Neues Passwort") + msg +
+      '<div class="fields">' + inp("aPass", "Neues Passwort", "password", "new-password", "mindestens 6 Zeichen") + "</div>" +
+      '<button type="submit" class="cta">Passwort speichern</button><button type="button" class="linkbtn" data-a-go="login">Zur Anmeldung</button></form>';
+    return '<form class="auth" data-a-form="login">' + top("Willkommen", "Anmelden") + msg +
+      '<div class="fields">' + inp("aMail", "E-Mail", "email", "email", "name@beispiel.de", A.email) + inp("aPass", "Passwort", "password", "current-password", "Passwort") + "</div>" +
+      '<button type="submit" class="cta">Anmelden</button><button type="button" class="linkbtn" data-a-go="forgot">Passwort vergessen?</button>' +
+      '<div class="auth-alt"><span class="hint-sm">Noch kein Konto?</span><button type="button" class="cta ghost" data-a-go="register">Konto erstellen</button></div></form>';
+  }
+  function renderAuth() { if (started) return; phoneEl.classList.add("auth"); scr.innerHTML = viewAuth(); scr.scrollTop = 0; }
+  const go = (mode, extra) => { Object.assign(A, { mode, err: "", msg: "" }, extra || {}); renderAuth(); };
+  const val = id => ((document.getElementById(id) || {}).value || "").trim();
+  const busyBtn = f => { const b = f && f.querySelector("[type=submit]"); if (b) { b.disabled = true; b.textContent = "Einen Moment …"; } };
+
+  // Daten des Kontos laden: neuerer Stand aus Cloud oder Handy; beim allerersten Konto auf diesem Handy werden die bisherigen Daten übernommen
+  async function enter(user) {
+    go("loading"); uid = user.uid;
+    const key = LEGACY + ":" + uid;
+    let local = null, doc, cloud = null;
+    try { local = JSON.parse(localStorage.getItem(key) || "null"); } catch (e) {}
+    try { const s = await db.collection("users").doc(uid).get(); doc = s.exists ? s.data() : null; } catch (e) { doc = undefined; }
+    if (doc === undefined && !local) { A.err = ""; go("offline"); return; }
+    try { cloud = doc && doc.state ? JSON.parse(doc.state) : null; } catch (e) {}
+    let data = cloud && (!local || (cloud.savedAt || 0) >= (local.savedAt || 0)) ? cloud : local;
+    if (!data && !localStorage.getItem(CLAIMED)) { try { data = JSON.parse(localStorage.getItem(LEGACY) || "null"); } catch (e) {} if (data) localStorage.setItem(CLAIMED, uid); }
+    data = data || {};
+    const reg = (doc && doc.profile) || {};
+    data.profile = Object.assign({ photo: "", weight: "", height: "" }, data.profile || {});
+    if (!data.profile.name) { data.profile.name = reg.name || user.displayName || ""; if (reg.weight) data.profile.weight = reg.weight; if (reg.height) data.profile.height = reg.height; }
+    data.savedAt = data.savedAt || Date.now();
+    const json = JSON.stringify(data);
+    localStorage.setItem(key, json); localStorage.setItem(LAST_UID, uid);
+    pending = json; push();
+    startApp(key);
+  }
+
+  // Speichern in der Cloud: kurz gesammelt, beim Verlassen der App sofort
+  let pending = null, pushT = null;
+  function push() { clearTimeout(pushT); if (!pending || !db || !uid) return; const json = pending; pending = null; let pr = {};
+    try { const p = JSON.parse(json).profile || {}; pr = { name: p.name || "", weight: p.weight || "", height: p.height || "" }; } catch (e) {}
+    db.collection("users").doc(uid).set({ state: json, profile: pr, updated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(() => { pending = pending || json; }); }
+  window.TA_cloud = json => { pending = json; clearTimeout(pushT); pushT = setTimeout(push, 1500); };
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") push(); });
+  window.TA_logout = async () => { push(); try { await auth.signOut(); } catch (e) {} localStorage.removeItem(LAST_UID); location.replace(APP_URL); };
+  window.TA_email = () => (auth && auth.currentUser && auth.currentUser.email) || "";
+
+  scr.addEventListener("submit", async e => {
+    const f = e.target.closest("[data-a-form]"); if (!f || started) return; e.preventDefault();
+    const kind = f.dataset.aForm; A.err = "";
+    try {
+      if (kind === "login") {
+        A.email = val("aMail"); const pw = (document.getElementById("aPass") || {}).value || "";
+        if (!A.email || !pw) { A.err = "Bitte E-Mail und Passwort eingeben."; renderAuth(); return; }
+        busyBtn(f);
+        const c = await auth.signInWithEmailAndPassword(A.email, pw);
+        if (!c.user.emailVerified) await c.user.reload();
+        if (auth.currentUser.emailVerified) enter(auth.currentUser); else go("verify");
+      } else if (kind === "register") {
+        A.name = val("aName"); A.email = val("aMail"); const pw = (document.getElementById("aPass") || {}).value || "", w = val("aWeight").replace(",", "."), h = val("aHeight").replace(",", ".");
+        if (!A.name || !A.email || !pw || !w || !h) { A.err = "Bitte fülle alle Felder aus."; renderAuth(); keep({ w, h }); return; }
+        busyBtn(f);
+        const c = await auth.createUserWithEmailAndPassword(A.email, pw);
+        await c.user.updateProfile({ displayName: A.name });
+        await db.collection("users").doc(c.user.uid).set({ profile: { name: A.name, weight: w, height: h }, created: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
+        await c.user.sendEmailVerification({ url: APP_URL + "?bestaetigt=1" });
+        await auth.signOut();
+        go("sent");
+      } else if (kind === "forgot") {
+        A.email = val("aMail"); if (!A.email) { A.err = "Bitte gib deine E-Mail ein."; renderAuth(); return; }
+        busyBtn(f);
+        await auth.sendPasswordResetEmail(A.email, { url: APP_URL });
+        go("login", { msg: "Wir haben dir einen Link an <b>" + escA(A.email) + "</b> geschickt. Leg damit ein neues Passwort fest und melde dich dann hier an." });
+      } else if (kind === "newpass") {
+        const pw = (document.getElementById("aPass") || {}).value || ""; busyBtn(f);
+        await auth.confirmPasswordReset(A.code, pw);
+        go("login", { msg: "Dein neues Passwort ist gespeichert. Melde dich jetzt an." });
+      }
+    } catch (err) {
+      const w = val("aWeight"), h = val("aHeight");
+      A.err = errText(err); if (err && err.code === "auth/email-already-in-use") A.mode = "login"; renderAuth(); keep({ w, h });
+    }
+  });
+  const keep = ({ w, h }) => { const a = document.getElementById("aWeight"), b = document.getElementById("aHeight"); if (a) a.value = w || ""; if (b) b.value = h || ""; };
+  scr.addEventListener("click", async e => {
+    if (started) return;
+    const el = e.target.closest("[data-a-go],[data-a-check],[data-a-resend],[data-a-reload]"); if (!el) return;
+    if (el.dataset.aGo) { if (A.mode === "verify") { try { await auth.signOut(); } catch (x) {} } go(el.dataset.aGo); return; }
+    if ("aReload" in el.dataset) { location.reload(); return; }
+    const u = auth.currentUser; if (!u) { go("login"); return; }
+    try {
+      if ("aCheck" in el.dataset) { await u.reload(); if (auth.currentUser.emailVerified) enter(auth.currentUser); else { A.err = "Noch nicht bestätigt. Tippe zuerst auf den Link in der Mail."; renderAuth(); } }
+      else { await u.sendEmailVerification({ url: APP_URL + "?bestaetigt=1" }); A.err = ""; A.msg = "Wir haben dir die Mail nochmal geschickt."; renderAuth(); }
+    } catch (err) { A.err = errText(err); A.msg = ""; renderAuth(); }
+  });
+
+  function loadScript(src) { return new Promise((ok, no) => { const s = document.createElement("script"); s.src = src; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); }
+  renderAuth();
+  (async () => {
+    try { await loadScript(FB + "firebase-app-compat.js"); await Promise.all([loadScript(FB + "firebase-auth-compat.js"), loadScript(FB + "firebase-firestore-compat.js")]); }
+    catch (e) {
+      // Ohne Internet: zuletzt angemeldetes Konto mit den Daten auf diesem Handy öffnen
+      const last = localStorage.getItem(LAST_UID);
+      if (last && localStorage.getItem(LEGACY + ":" + last)) startApp(LEGACY + ":" + last); else go("offline");
+      return;
+    }
+    firebase.initializeApp(FIREBASE_CONFIG); auth = firebase.auth(); auth.languageCode = "de"; db = firebase.firestore();
+    // Links aus den Mails (falls die Aktions-URL auf die App zeigt) und Rückkehr nach der Bestätigung
+    const q = new URLSearchParams(location.search), mode = q.get("mode"), code = q.get("oobCode");
+    if (q.has("bestaetigt") || mode) history.replaceState(null, "", APP_URL);
+    if (mode === "verifyEmail" && code) { try { await auth.applyActionCode(code); A.msg = "Deine E-Mail ist bestätigt. Melde dich jetzt an."; } catch (err) { A.err = errText(err); } }
+    else if (mode === "resetPassword" && code) { A.code = code; try { A.email = await auth.verifyPasswordResetCode(code); go("newpass"); return; } catch (err) { A.err = errText(err); } }
+    else if (q.has("bestaetigt")) A.msg = "Deine E-Mail ist bestätigt. Melde dich jetzt an.";
+    const off = auth.onAuthStateChanged(async u => {
+      off();
+      if (u && !u.emailVerified) { try { await u.reload(); u = auth.currentUser; } catch (e) {} }
+      if (u && u.emailVerified) enter(u);
+      else { if (u) { try { await auth.signOut(); } catch (e) {} } A.mode = "login"; renderAuth(); }
+    });
+  })();
 })();
 </script>
 <script>if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});</script>
