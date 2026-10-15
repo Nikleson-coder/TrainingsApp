@@ -127,3 +127,4 @@ Quelldatei: prototyp.html · Übungsdaten: uebungen.json (128 Übungen aus deine
 - v106 (15.10.): Rundgang-Markierung wird nach dem Einblenden nachgemessen und exakt aufs Ziel geschoben (auf dem iPhone saß sie ein paar Pixel zu tief); iOS-Knopf-Standardstile an der Markierung entfernt.
 - v107 (15.10.): Rundgang ohne Schrittzähler („1 / 28“ entfernt, Nik fand das abschreckend).
 - v108 (15.10.): Rundgang: Seite kann während des Rundgangs nicht mehr von Hand scrollen oder federn (overflow hidden, touchmove blockiert). Vermutete Ursache für das Nachrutschen der Markierung auf dem iPhone; Markierung erscheint sofort ohne Ausblenden.
+- v109 (15.10.): Rundgang-Markierung neu gebaut: keine darübergelegte Box mehr, sondern das Ziel selbst wird über die Abdunklung gehoben und bekommt einen grünen Rand innen am eigenen Rand (Klasse tut-target). Sitzt dadurch immer genau, ohne Nachrutschen. Verlauf-Schritte markieren den ganzen Umschalter.

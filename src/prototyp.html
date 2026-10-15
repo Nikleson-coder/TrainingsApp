@@ -412,14 +412,15 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 .hint-sm { font-size: .82rem; color: var(--muted); margin: 0; }
 /* Einführung: Karte über dem Inhalt, der passende Tab unten leuchtet */
 .phone { position: relative; }
-.tut { position: absolute; inset: 0; z-index: 20; }
-.tut.dim { background: rgba(0, 0, 0, .6); }
-.tut-hole { position: absolute; display: block; box-sizing: border-box; margin: 0; padding: 0; border: 0; -webkit-appearance: none; appearance: none; min-height: 0; background: transparent; box-shadow: 0 0 0 2.5px var(--accent), 0 0 0 9999px rgba(0, 0, 0, .6); }
-/* Während des Rundgangs scrollt nur die App selbst (kein Nachrutschen/Federn auf dem iPhone, Markierung bleibt auf dem Ziel) */
+.tut { position: absolute; inset: 0; z-index: 20; background: rgba(0, 0, 0, .6); touch-action: none; }
+/* Während des Rundgangs scrollt nur die App selbst */
 .phone.touring .screen { overflow: hidden; }
-.tut { touch-action: none; overscroll-behavior: none; }
-.tut-hole.tap { cursor: pointer; animation: tutPulse 1.4s ease-in-out infinite; }
-@keyframes tutPulse { 50% { box-shadow: 0 0 0 4px var(--accent), 0 0 0 9999px rgba(0, 0, 0, .6); } }
+/* Das Ziel selbst liegt über der Abdunklung und bekommt den grünen Rand (sitzt dadurch immer genau auf dem Element) */
+#phone .tut-target { position: relative; z-index: 21; box-shadow: inset 0 0 0 2.5px var(--accent); }
+#phone .tut-target.tut-abs { position: absolute; }
+#phone .tut-target.tut-info { pointer-events: none; }
+#phone .tut-target.tut-tap { cursor: pointer; animation: tutPulse 1.4s ease-in-out infinite; }
+@keyframes tutPulse { 50% { box-shadow: inset 0 0 0 4px var(--accent); } }
 .tut-card { position: absolute; left: 14px; right: 14px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 12px 40px rgba(0, 0, 0, .3); font-family: var(--body); }
 .tut-card p { margin: 0; font-size: 1rem; line-height: 1.4; }
 .tut-foot { display: flex; align-items: center; gap: 10px; }
@@ -1428,36 +1429,32 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     [TV("rahmen"), '.tabbar [data-tab="exercises"]', "Tippe unten auf Training.", 1],
     [TV("exercises"), null, "Hier findest du alle Übungen für Kraft, Ausdauer und Skills. Überall kannst du eigene Übungen hinzufügen oder Vorschläge von anderen übernehmen.", 0],
     [TV("exercises"), '.tabbar [data-tab="history"]', "Tippe unten auf Verlauf.", 1],
-    [TV("history", () => { state.histMode = "week"; state.histOffset = 0; }), '[data-hmode="week"]', "In der Wochenansicht siehst du, welche Trainings du diese Woche geschafft hast.", 0],
-    [TV("history", () => { state.histMode = "month"; state.monthOffset = 0; }), '[data-hmode="month"]', "In der Monatsansicht siehst du den ganzen Monat: grün geschafft, rot verpasst. Viel Spaß beim Training!", 0]
+    [TV("history", () => { state.histMode = "week"; state.histOffset = 0; }), '.top .hmode', "In der Wochenansicht siehst du, welche Trainings du diese Woche geschafft hast.", 0],
+    [TV("history", () => { state.histMode = "month"; state.monthOffset = 0; }), '.top .hmode', "In der Monatsansicht siehst du den ganzen Monat: grün geschafft, rot verpasst. Viel Spaß beim Training!", 0]
   ];
   // Schritte ohne Ziel auf dem Bildschirm (z. B. Abmelden in der Vorschau) werden übersprungen
   function tutGo(i) { for (; i < TUT.length; i++) { state.tut = i; TUT[i][0](); screen.scrollTop = 0; render(); if (!TUT[i][1] || phone.querySelector(TUT[i][1])) return; } tutEnd(); }
   function tutEnd() { state.tut = null; state.tutDone = true; state.tab = state.view = "home"; state.histMode = "week"; save(); render(); screen.scrollTop = 0; }
-  // Markierung nachträglich exakt auf das Ziel schieben (gemessen, wo sie wirklich liegt; gleicht Verschiebungen auf dem iPhone aus)
-  function tutFix() {
-    const hole = phone.querySelector(".tut-hole"), sel = state.tut != null && TUT[state.tut][1], el = hole && sel && phone.querySelector(sel); if (!el) return;
-    const b = el.getBoundingClientRect(), hr = hole.getBoundingClientRect(), dx = b.left - hr.left, dy = b.top - hr.top;
-    if (Math.abs(dx) < .5 && Math.abs(dy) < .5 && Math.abs(b.height - hr.height) < .5 && Math.abs(b.width - hr.width) < .5) return false;
-    hole.style.left = (parseFloat(hole.style.left) + dx) + "px"; hole.style.top = (parseFloat(hole.style.top) + dy) + "px"; hole.style.width = b.width + "px"; hole.style.height = b.height + "px";
-    const c = phone.querySelector(".tut-card"); if (c && c.style.top) c.style.top = (parseFloat(c.style.top) + dy) + "px"; else if (c && c.style.bottom) c.style.bottom = (parseFloat(c.style.bottom) - dy) + "px";
-    return true;
+  // Ziel markieren: Klasse direkt am Element (Rand + über der Abdunklung), Rundung und Hintergrund passend
+  function tutMark() {
+    const [, sel, , tap] = TUT[state.tut], el = sel && phone.querySelector(sel); if (!el) return;
+    const cs = getComputedStyle(el), abs = cs.position === "absolute", round = parseFloat(cs.borderRadius), clear = /rgba\(0, 0, 0, 0\)|transparent/.test(cs.backgroundColor);
+    el.classList.add("tut-target", tap ? "tut-tap" : "tut-info"); if (abs) el.classList.add("tut-abs");
+    el.dataset.tutStyle = ""; if (!round) el.style.borderRadius = "12px";
+    if (clear) el.style.background = el.closest(".tabbar") ? "var(--a-tabbg)" : "var(--bg)";
   }
   function tutOverlay() {
     const [, sel, txt, tap] = TUT[state.tut], el = sel && phone.querySelector(sel), last = state.tut === TUT.length - 1;
-    const W = phone.clientWidth, H = phone.clientHeight, P = phone.getBoundingClientRect();
-    let hole = "", pos = "top:50%;transform:translateY(-50%)";
+    const H = phone.clientHeight, P = phone.getBoundingClientRect();
+    let pos = "top:50%;transform:translateY(-50%)";
     if (el) {
       // Ziel in den sichtbaren Bereich holen (nur scrollen, wenn es von oben nicht ganz zu sehen ist)
       if (screen.contains(el)) { const sr = screen.getBoundingClientRect(), er = el.getBoundingClientRect(), y = er.top - sr.top + screen.scrollTop;
         screen.scrollTop = y + er.height <= sr.height - 16 ? 0 : y - Math.max(16, (sr.height - er.height) / 2); }
-      // Markierung liegt genau auf dem Rand des Ziels (gleiche Größe, gleiche Rundung)
-      const b = el.getBoundingClientRect(), x = b.left - P.left - phone.clientLeft, y = b.top - P.top - phone.clientTop, w = b.width, h = b.height, rad = getComputedStyle(el).borderRadius;
-      const st = ' style="left:' + x + "px;top:" + y + "px;width:" + w + "px;height:" + h + "px;border-radius:" + (parseFloat(rad) ? rad : "12px") + '"';
-      hole = tap ? '<button type="button" class="tut-hole tap" data-tuthit aria-label="Weiter"' + st + "></button>" : '<div class="tut-hole"' + st + "></div>";
+      const b = el.getBoundingClientRect(), y = b.top - P.top - phone.clientTop, h = b.height;
       pos = y + h / 2 > H / 2 ? "bottom:" + Math.max(12, H - y + 12) + "px" : "top:" + Math.min(H - 180, y + h + 12) + "px";
     }
-    return '<div class="tut' + (el ? "" : " dim") + '" role="dialog" aria-label="Einführung">' + hole + '<div class="tut-card" style="' + pos + '">' +
+    return '<div class="tut" role="dialog" aria-label="Einführung"><div class="tut-card" style="' + pos + '">' +
       "<p>" + (typeof txt === "function" ? txt() : txt) + "</p>" +
       '<div class="tut-foot"><button type="button" class="tut-skip" data-tutskip>Überspringen</button><span class="tut-n"></span>' +
       (tap ? '<span class="tut-tap">Tippe auf die Markierung</span>' : '<button type="button" class="cta" data-tutnext>' + (last ? "Fertig" : "Weiter") + "</button>") + "</div></div></div>";
@@ -1504,8 +1501,9 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     // Profilbild immer auf Höhe der Überschrift (wie bei „Hallo Nik“), auch im Verlauf unter dem Umschalter
     { const av = screen.querySelector(".avatar-btn"), h = screen.querySelector(".top h2"); if (av && h) av.style.top = Math.round(h.offsetTop - 12) + "px"; }
     document.querySelectorAll(".tabbar [data-tab]").forEach(b => { if (b.dataset.tab === state.tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+    phone.querySelectorAll(".tut-target").forEach(t => { t.classList.remove("tut-target", "tut-tap", "tut-info", "tut-abs"); if ("tutStyle" in t.dataset) { t.style.borderRadius = t.style.background = ""; delete t.dataset.tutStyle; } });
     phone.classList.toggle("touring", state.tut != null); const old = phone.querySelector(".tut"); if (old) old.remove();
-    if (state.tut != null) { phone.insertAdjacentHTML("beforeend", tutOverlay()); tutFix(); requestAnimationFrame(tutFix); }
+    if (state.tut != null) { phone.insertAdjacentHTML("beforeend", tutOverlay()); tutMark(); }
   }
 
   document.addEventListener("input", e => {
@@ -1538,7 +1536,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const el = e.target.closest("button"); if (!el) return;
     if (el.dataset.modeBtn) { state.mode = el.dataset.modeBtn; save(); render(); return; }
     if (!phone.contains(el)) return;
-    if ("tutnext" in el.dataset || "tuthit" in el.dataset) { if (state.tut >= TUT.length - 1) tutEnd(); else tutGo(state.tut + 1); return; }
+    if ("tutnext" in el.dataset || (state.tut != null && el.classList.contains("tut-tap"))) { if (state.tut >= TUT.length - 1) tutEnd(); else tutGo(state.tut + 1); return; }
     if ("tutskip" in el.dataset) { tutEnd(); return; }
     if ("tutstart" in el.dataset) { tutGo(0); return; }
     if (state.tut != null) return;
@@ -1641,7 +1639,6 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   const now = new Date(); document.getElementById("clock").textContent = now.getHours() + ":" + String(now.getMinutes()).padStart(2, "0");
   // Einführung beim ersten Anmelden (nur mit Konten, nicht in der Vorschau)
   window.addEventListener("resize", () => { if (state.tut != null) render(); });
-  screen.addEventListener("scroll", () => { if (state.tut != null) tutFix(); }, { passive: true });
   document.addEventListener("touchmove", e => { if (state.tut != null) e.preventDefault(); }, { passive: false });
   if (document.fonts) document.fonts.ready.then(() => { if (state.tut != null) render(); });
   if (window.TA_logout && !state.tutDone) tutGo(0); else render();
