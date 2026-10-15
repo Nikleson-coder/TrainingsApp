@@ -1477,7 +1477,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   };
   // ===== Konten (Firebase): erst anmelden, dann startet die App mit den Daten dieses Kontos =====
   // Ohne FIREBASE_CONFIG (z. B. in der Vorschau) startet die App direkt wie bisher.
-  const FIREBASE_CONFIG = null;
+  const FIREBASE_CONFIG = { apiKey: "AIzaSyAW1xglr3b_vXONUjMirHZJCcY5qJj45hQ", authDomain: "trainingsapp-f379b.firebaseapp.com", projectId: "trainingsapp-f379b", storageBucket: "trainingsapp-f379b.firebasestorage.app", messagingSenderId: "399794152085", appId: "1:399794152085:web:bdac95b85bbefeeaa1b19c" };
   const FB = "https://www.gstatic.com/firebasejs/10.14.1/", APP_URL = location.origin + location.pathname;
   const LAST_UID = "trainingsapp-uid", CLAIMED = "trainingsapp-claimed", LEGACY = "trainingsapp-v2";
   const phoneEl = document.getElementById("phone"), scr = document.getElementById("screen");
@@ -1486,7 +1486,9 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   const A = { mode: "loading", msg: "", err: "", email: "", code: "" };
 
   function startApp(key) { started = true; window.TA_STORE = key; phoneEl.classList.remove("auth"); window.TA_start(); }
-  if (!FIREBASE_CONFIG || window.TA_DEMO) { startApp(LEGACY); return; }
+  // Erst einschalten, wenn in Firebase Anmeldung (E-Mail/Passwort) und Firestore eingerichtet sind
+  const AUTH_ON = false;
+  if (!AUTH_ON || !FIREBASE_CONFIG || window.TA_DEMO) { startApp(LEGACY); return; }
 
   const ERR = { "auth/email-already-in-use": "Mit dieser E-Mail gibt es schon ein Konto. Melde dich an.", "auth/invalid-email": "Die E-Mail-Adresse stimmt nicht.", "auth/weak-password": "Das Passwort braucht mindestens 6 Zeichen.",
     "auth/invalid-credential": "E-Mail oder Passwort stimmt nicht.", "auth/wrong-password": "E-Mail oder Passwort stimmt nicht.", "auth/user-not-found": "E-Mail oder Passwort stimmt nicht.", "auth/missing-password": "Bitte gib dein Passwort ein.",
