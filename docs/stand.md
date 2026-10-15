@@ -117,3 +117,4 @@ Quelldatei: prototyp.html · Übungsdaten: uebungen.json (128 Übungen aus deine
 - v96 (15.10.): App heißt jetzt „Alpha-Sports“ (Manifest, Titel, Home-Bildschirm-Name, Anmeldeseite). Anmeldung eingeschaltet (`AUTH_ON = true`); Firebase-Projekt trainingsapp-f379b geprüft: E-Mail-Anmeldung an, Domain erlaubt, Firestore-Regeln greifen. Echter Test: Registrieren → Mail → „E-Mail bestätigen“, Testkonto danach gelöscht. Vorschau-Artefakte laufen ohne Anmeldung (`window.TA_DEMO`).
 - v97 (15.10.): Anmeldeseite: „Willkommen bei Alpha-Sports“ groß wie „Anmelden“ (Alpha-Sports ohne Trennung), alle Anmelde-Seiten senkrecht mittig.
 - v98 (15.10.): Anmeldeseite: „Willkommen bei Alpha-Sports!“ (mit Ausrufezeichen) nach oben geschoben, etwas über der Mitte zwischen oberem Rand und „Anmelden“; Anmelden und alles darunter bleibt mittig.
+- v99 (15.10.): Phasenbalken (Aufwärmen | Hauptteil | Cooldown) im Verhältnis 1 : 4 : 1 statt gleich breit.

@@ -773,7 +773,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   const checkSvg = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
   function phasebar(p) {
-    return '<div class="phasebar" aria-hidden="true">' + PHASES.map(ph => '<span class="' + ph.key + '" style="flex:1"></span>').join("") + "</div>" +
+    return '<div class="phasebar" aria-hidden="true">' + PHASES.map(ph => '<span class="' + ph.key + '" style="flex:' + (ph.key === "m" ? 4 : 1) + '"></span>').join("") + "</div>" +
       '<div class="phaselegend">' + PHASES.map((ph, i) => '<span><i style="background:var(--' + ["warm", "main", "cool"][i] + ')"></i>' + ph.name + "</span>").join("") + "</div>";
   }
 
