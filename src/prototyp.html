@@ -416,11 +416,11 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 /* Während des Rundgangs scrollt nur die App selbst */
 .phone.touring .screen { overflow: hidden; }
 /* Das Ziel selbst liegt über der Abdunklung und bekommt den grünen Rand (sitzt dadurch immer genau auf dem Element) */
-#phone .tut-target { position: relative; z-index: 21; box-shadow: inset 0 0 0 2.5px var(--accent); }
+#phone .tut-target { position: relative; z-index: 21; outline: 2.5px solid var(--accent); outline-offset: -2.5px; }
 #phone .tut-target.tut-abs { position: absolute; }
 #phone .tut-target.tut-info { pointer-events: none; }
 #phone .tut-target.tut-tap { cursor: pointer; animation: tutPulse 1.4s ease-in-out infinite; }
-@keyframes tutPulse { 50% { box-shadow: inset 0 0 0 4px var(--accent); } }
+@keyframes tutPulse { 50% { outline-width: 4px; outline-offset: -4px; } }
 .tut-card { position: absolute; left: 14px; right: 14px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 12px 40px rgba(0, 0, 0, .3); font-family: var(--body); }
 .tut-card p { margin: 0; font-size: 1rem; line-height: 1.4; }
 .tut-foot { display: flex; align-items: center; gap: 10px; }
