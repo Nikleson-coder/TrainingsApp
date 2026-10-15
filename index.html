@@ -1478,7 +1478,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     }
     return '<div class="tut' + (el ? "" : " dim") + '" role="dialog" aria-label="Einführung">' + hole + '<div class="tut-card" style="' + pos + '">' +
       "<p>" + (typeof txt === "function" ? txt() : txt) + "</p>" +
-      '<div class="tut-foot"><button type="button" class="tut-skip" data-tutskip>Überspringen</button><span class="tut-n">' + (state.tut + 1) + " / " + TUT.length + "</span>" +
+      '<div class="tut-foot"><button type="button" class="tut-skip" data-tutskip>Überspringen</button><span class="tut-n"></span>' +
       (tap ? '<span class="tut-tap">Tippe auf die Markierung</span>' : '<button type="button" class="cta" data-tutnext>' + (last ? "Fertig" : "Weiter") + "</button>") + "</div></div></div>";
   }
   const screen = document.getElementById("screen"), phone = document.getElementById("phone");
