@@ -118,3 +118,4 @@ Quelldatei: prototyp.html · Übungsdaten: uebungen.json (128 Übungen aus deine
 - v97 (15.10.): Anmeldeseite: „Willkommen bei Alpha-Sports“ groß wie „Anmelden“ (Alpha-Sports ohne Trennung), alle Anmelde-Seiten senkrecht mittig.
 - v98 (15.10.): Anmeldeseite: „Willkommen bei Alpha-Sports!“ (mit Ausrufezeichen) nach oben geschoben, etwas über der Mitte zwischen oberem Rand und „Anmelden“; Anmelden und alles darunter bleibt mittig.
 - v99 (15.10.): Phasenbalken (Aufwärmen | Hauptteil | Cooldown) im Verhältnis 1 : 4 : 1 statt gleich breit.
+- v100 (15.10.): Profil: Vorname-, Gewicht- und Größenfeld beginnen an derselben Stelle; Gewicht und Größe gleich breit, Einheiten (kg/cm) in fester Breite; Vorname endet rechts bündig mit den Einheiten. Auch im Registrieren-Formular.

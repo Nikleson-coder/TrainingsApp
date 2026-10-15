@@ -421,7 +421,9 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 .auth-msg.err { color: var(--miss); background: color-mix(in srgb, var(--miss) 13%, transparent); }
 .auth-msg.ok { color: var(--ok); background: color-mix(in srgb, var(--ok) 13%, transparent); }
 .auth-alt { display: flex; flex-direction: column; align-items: center; gap: 8px; margin-top: 10px; padding-top: 18px; border-top: 1px solid var(--line); }
-.field input.pname { width: 9rem; text-align: right; }
+.field .unit { width: 1.7rem; }
+/* Vorname beginnt bündig mit Gewicht und Größe und endet dort, wo die Einheiten enden */
+.field input.pname { width: calc(5.5rem + 6px + 1.7rem); text-align: right; }
 .acct { display: flex; flex-direction: column; gap: 10px; }
 @media (max-width: 440px) { .avatar-btn { right: 14px; } }
 
@@ -1284,8 +1286,8 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       (pr.photo ? '<button type="button" data-photo-remove>Entfernen</button>' : "") + "</div></div>" +
       '<div class="fields">' +
       (window.TA_logout ? '<div class="field"><label for="pName">Vorname</label><span class="inp"><input id="pName" class="pname" type="text" autocomplete="given-name" placeholder="Vorname" value="' + esc(pr.name) + '" data-pfield="name"></span></div>' : "") +
-      '<div class="field"><label for="pWeight">Körpergewicht</label><span class="inp"><input id="pWeight" type="number" inputmode="decimal" min="30" max="250" step="0.1" placeholder="–" value="' + esc(pr.weight) + '" data-pfield="weight">kg</span></div>' +
-      '<div class="field"><label for="pHeight">Körpergröße</label><span class="inp"><input id="pHeight" type="number" inputmode="numeric" min="100" max="230" step="1" placeholder="–" value="' + esc(pr.height) + '" data-pfield="height">cm</span></div></div>' +
+      '<div class="field"><label for="pWeight">Körpergewicht</label><span class="inp"><input id="pWeight" type="number" inputmode="decimal" min="30" max="250" step="0.1" placeholder="–" value="' + esc(pr.weight) + '" data-pfield="weight"><span class="unit">kg</span></span></div>' +
+      '<div class="field"><label for="pHeight">Körpergröße</label><span class="inp"><input id="pHeight" type="number" inputmode="numeric" min="100" max="230" step="1" placeholder="–" value="' + esc(pr.height) + '" data-pfield="height"><span class="unit">cm</span></span></div></div>' +
       '<p class="hint-sm">Dein Körpergewicht wird automatisch bei Übungen mit Körpergewicht angezeigt, z. B. bei Klimmzügen. Weitere Angaben ergänzen wir später.</p>' +
       '<span class="label">Darstellung</span><div class="hmode modepick" role="group" aria-label="Darstellung">' + [["light", "Hellmodus"], ["dark", "Dunkelmodus"], ["auto", "Wie Handy"]].map(([k, l]) =>
         '<button type="button" data-mode-btn="' + k + '" aria-pressed="' + (state.mode === k) + '">' + l + "</button>").join("") + "</div>" +
@@ -1500,7 +1502,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const m = A.mode, msg = (A.err ? '<div class="auth-msg err">' + escA(A.err) + "</div>" : "") + (A.msg ? '<div class="auth-msg ok">' + A.msg + "</div>" : "");
     const top = (sub, h) => '<div class="top"><span class="date">' + sub + "</span><h2>" + h + "</h2></div>";
     const inp = (id, label, type, ac, ph, val) => '<div class="field fcol"><label for="' + id + '">' + label + '</label><input id="' + id + '" class="tin" type="' + type + '" autocomplete="' + ac + '"' + (type === "email" ? ' autocapitalize="off" spellcheck="false"' : "") + ' placeholder="' + ph + '" value="' + escA(val || "") + '"></div>';
-    const num = (id, label, unit, mode) => '<div class="field"><label for="' + id + '">' + label + '</label><span class="inp"><input id="' + id + '" type="number" inputmode="' + mode + '" placeholder="–">' + unit + "</span></div>";
+    const num = (id, label, unit, mode) => '<div class="field"><label for="' + id + '">' + label + '</label><span class="inp"><input id="' + id + '" type="number" inputmode="' + mode + '" placeholder="–"><span class="unit">' + unit + "</span></span></div>";
     if (m === "loading") return '<div class="auth">' + top("Alpha-Sports", "Einen Moment …") + "</div>";
     if (m === "offline") return '<div class="auth">' + top("Alpha-Sports", "Keine Verbindung") + '<p class="hint-sm">Zum ersten Anmelden braucht die App Internet. Prüfe deine Verbindung.</p>' + msg + '<button type="button" class="cta" data-a-reload>Nochmal versuchen</button></div>';
     if (m === "register") return '<form class="auth" data-a-form="register">' + top("Neues Konto", "Registrieren") + msg +
