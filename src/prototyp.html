@@ -410,6 +410,21 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 .field input { width: 5.5rem; font: 600 1rem var(--body); text-align: right; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-variant-numeric: tabular-nums; }
 .field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .hint-sm { font-size: .82rem; color: var(--muted); margin: 0; }
+/* Einführung: Karte über dem Inhalt, der passende Tab unten leuchtet */
+.phone { position: relative; }
+.tut { position: absolute; inset: 0; z-index: 20; display: flex; flex-direction: column; justify-content: flex-end; background: rgba(0, 0, 0, .45); padding: 12px 12px calc(var(--tabh, 74px) + 10px); }
+.tut-card { background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 22px; padding: 16px 18px 18px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 12px 40px rgba(0, 0, 0, .3); font-family: var(--body); }
+.tut-head { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.tut-skip { background: none; border: 0; color: var(--muted); font: 600 .82rem var(--body); cursor: pointer; padding: 4px 0; }
+.tut-card h3 { margin: 0; font-family: var(--display); font-size: 1.5rem; }
+.tut-card ul { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 7px; font-size: .92rem; line-height: 1.4; }
+.tut-dots { display: flex; gap: 6px; justify-content: center; }
+.tut-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); }
+.tut-dots i.on { background: var(--accent); width: 18px; border-radius: 4px; }
+.tut-btns { display: flex; gap: 8px; }
+.tut-btns .cta { flex: 1; }
+.phone.touring .tabbar { position: relative; z-index: 21; pointer-events: none; }
+.phone.touring .tabbar button[aria-current="page"] { background: var(--soft); }
 /* Vorschläge von anderen */
 .sugs { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 18px; background: var(--soft); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); }
 .sug { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; cursor: pointer; }
@@ -749,7 +764,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       ["sections", "logs", "picks", "done", "userSplits"].forEach(k => Object.assign(state[k], saved[k] || {}));
       Object.keys(state.picks).filter(k => !k.includes("|")).forEach(k => { state.picks[k + "|" + (saved.split || "ka") + "|" + ((new Date(k + "T00:00:00").getDay() + 6) % 7)] = state.picks[k]; delete state.picks[k]; });
       [["Dauerlauf", "Joggen"], ["Sprints", "Sprinten"], ["Radfahren draußen oder Peloton", "Fahrrad draußen"]].forEach(([o, n]) => { if (state.logs[o]) { state.logs[n] = (state.logs[n] || []).concat(state.logs[o]); delete state.logs[o]; } });
-      if (saved.mode) state.mode = saved.mode; if (saved.split) state.split = saved.split; if (saved.profile) Object.assign(state.profile, saved.profile); if (saved.wo) state.wo = saved.wo; if (saved.routines) state.routines = Object.assign({ warm: [], cool: [] }, saved.routines); if (saved.rpicks) state.rpicks = saved.rpicks; if (saved.userEx) state.userEx = saved.userEx; state.rSeeded = !!saved.rSeeded; state.rSeedWarm1 = !!saved.rSeedWarm1; state.rSeedCool1 = !!saved.rSeedCool1;
+      if (saved.mode) state.mode = saved.mode; if (saved.split) state.split = saved.split; if (saved.profile) Object.assign(state.profile, saved.profile); if (saved.wo) state.wo = saved.wo; if (saved.routines) state.routines = Object.assign({ warm: [], cool: [] }, saved.routines); if (saved.rpicks) state.rpicks = saved.rpicks; if (saved.userEx) state.userEx = saved.userEx; state.rSeeded = !!saved.rSeeded; state.rSeedWarm1 = !!saved.rSeedWarm1; state.rSeedCool1 = !!saved.rSeedCool1; state.tutDone = !!saved.tutDone;
     } else {
       // Aus der alten Version nur Einstellungen und Profil übernehmen, keine Beispielwerte
       const old = JSON.parse(localStorage.getItem("trainingsapp-proto") || "null");
@@ -775,7 +790,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   // Beispielroutinen aus Version 59 wieder entfernen
   state.routines.warm = state.routines.warm.filter(r => r.id !== "rw-beispiel");
   state.routines.cool = state.routines.cool.filter(r => r.id !== "rc-beispiel");
-  function save() { try { const json = JSON.stringify({ savedAt: Date.now(), sections: state.sections, logs: state.logs, picks: state.picks, done: state.done, userSplits: state.userSplits, routines: state.routines, rpicks: state.rpicks, userEx: state.userEx, rSeeded: state.rSeeded, rSeedWarm1: state.rSeedWarm1, rSeedCool1: state.rSeedCool1, wo: state.wo, mode: state.mode, split: state.split, profile: state.profile }); localStorage.setItem(STORE, json); if (window.TA_cloud) window.TA_cloud(json); } catch (e) {} }
+  function save() { try { const json = JSON.stringify({ savedAt: Date.now(), sections: state.sections, logs: state.logs, picks: state.picks, done: state.done, userSplits: state.userSplits, routines: state.routines, rpicks: state.rpicks, userEx: state.userEx, rSeeded: state.rSeeded, rSeedWarm1: state.rSeedWarm1, rSeedCool1: state.rSeedCool1, tutDone: !!state.tutDone, wo: state.wo, mode: state.mode, split: state.split, profile: state.profile }); localStorage.setItem(STORE, json); if (window.TA_cloud) window.TA_cloud(json); } catch (e) {} }
   const secs = k => state.sections[k] || [false, false, false];
   const isDone = k => secs(k).every(Boolean);
 
@@ -1298,6 +1313,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       '<div class="field"><label for="pWeight">Körpergewicht</label><span class="inp"><input id="pWeight" type="number" inputmode="decimal" min="30" max="250" step="0.1" placeholder="–" value="' + esc(pr.weight) + '" data-pfield="weight"><span class="unit">kg</span></span></div>' +
       '<div class="field"><label for="pHeight">Körpergröße</label><span class="inp"><input id="pHeight" type="number" inputmode="numeric" min="100" max="230" step="1" placeholder="–" value="' + esc(pr.height) + '" data-pfield="height"><span class="unit">cm</span></span></div></div>' +
       '<p class="hint-sm">Dein Körpergewicht wird automatisch bei Übungen mit Körpergewicht angezeigt, z. B. bei Klimmzügen. Weitere Angaben ergänzen wir später.</p>' +
+      '<button type="button" class="cta ghost" data-tutstart>Einführung nochmal ansehen</button>' +
       '<span class="label">Darstellung</span><div class="hmode modepick" role="group" aria-label="Darstellung">' + [["light", "Hellmodus"], ["dark", "Dunkelmodus"], ["auto", "Wie Handy"]].map(([k, l]) =>
         '<button type="button" data-mode-btn="' + k + '" aria-pressed="' + (state.mode === k) + '">' + l + "</button>").join("") + "</div>" +
       (window.TA_logout ? '<span class="label">Konto</span><div class="acct"><span class="hint-sm">Angemeldet als ' + esc(window.TA_email()) + '</span><button type="button" class="cta ghost" data-logout>Abmelden</button></div>' : "");
@@ -1331,10 +1347,9 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   const sugEx = g => uniq(SHARED().filter(d => d.type === "ex" && d.g === g && d.ex && typeof d.ex.n === "string" && d.ex.n.trim() && !(EXERCISES[g] || []).some(x => normN(x.n) === normN(d.ex.n))), d => normN(d.ex.n));
   const sugSplits = () => uniq(SHARED().filter(d => d.type === "split" && validSplit(d.split) && !allSplits().some(s => splitSig(s) === splitSig(d.split))), d => splitSig(d.split));
   const sugRoutines = k => uniq(SHARED().filter(d => d.type === "routine" && d.kind === k && d.r && validItems(d.r.items) && !state.routines[k].some(r => itemsSig(r.items) === itemsSig(d.r.items))), d => itemsSig(d.r.items));
-  const byWho = d => d.byName ? "von " + esc(d.byName) : "von jemand anderem";
   const sugBox = (title, list, row) => list.length ? '<div class="sugs"><span class="label">Vorschläge · ' + title + "</span>" + list.map(row).join("") + "</div>" : "";
-  const sugRowEx = d => '<div class="sug"><span class="gx"><strong>' + esc(d.ex.n) + "</strong><small>" + (EX_TYPES.find(y => y[0] === d.ex.t) || EX_TYPES[0])[1] + (d.ex.sec ? " · in Sekunden" : "") + " · " + byWho(d) + '</small></span><button type="button" class="cta sm" data-sugtake="' + esc(d.id) + '">Übernehmen</button></div>';
-  const sugRowOpen = (d, name, meta) => '<button type="button" class="sug" data-sugopen="' + esc(d.id) + '"><span class="gx"><strong>' + esc(name) + "</strong><small>" + meta + " · " + byWho(d) + "</small></span>" + chev + "</button>";
+  const sugRowEx = d => '<div class="sug"><span class="gx"><strong>' + esc(d.ex.n) + "</strong><small>" + (EX_TYPES.find(y => y[0] === d.ex.t) || EX_TYPES[0])[1] + (d.ex.sec ? " · in Sekunden" : "") + '</small></span><button type="button" class="cta sm" data-sugtake="' + esc(d.id) + '">Übernehmen</button></div>';
+  const sugRowOpen = (d, name, meta) => '<button type="button" class="sug" data-sugopen="' + esc(d.id) + '"><span class="gx"><strong>' + esc(name) + "</strong><small>" + meta + "</small></span>" + chev + "</button>";
   const sugRowSplit = d => sugRowOpen(d, d.split.name, trainCount(d.split) + "× pro Woche");
   const sugRowRoutine = d => sugRowOpen(d, d.r.name || "Routine", rMeta(d.r));
   function viewSug() {
@@ -1346,12 +1361,12 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       const s = d.split, load = (s.load || []).filter(l => Array.isArray(l) && l[1]);
       const rows = s.days.map((x, i) => '<div class="prow t-' + x.type + (x.type === "rest" ? " rest" : "") + '" style="cursor:default"><span class="d"><small>' + ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"][i] + '</small></span><span class="t"><span class="chip">' + TYPE_LABEL[x.type] + "</span><strong>" + (x.type === "rest" ? "Erholung" : esc(x.title || TYPE_LABEL[x.type])) + "</strong>" +
         (x.type !== "rest" && x.blocks && x.blocks.length ? '<small class="sug-blocks">' + esc(blockSum(x.blocks)) + "</small>" : "") + "</span></div>").join("");
-      return back + '<div class="dhead"><span class="label">Vorschlag ' + byWho(d) + "</span><h2>" + esc(s.name) + '</h2><div class="sub">' + trainCount(s) + "× pro Woche</div></div>" +
+      return back + '<div class="dhead"><span class="label">Vorschlag von anderen</span><h2>' + esc(s.name) + '</h2><div class="sub">' + trainCount(s) + "× pro Woche</div></div>" +
         (load.length ? '<div class="facts">' + load.map(l => '<span class="fact">' + esc(l[0]) + ": " + esc(l[1]) + "</span>").join("") + "</div>" : "") +
         '<div><span class="label">Wochenablauf</span><div class="plist" style="margin-top:8px">' + rows + "</div></div>" + take;
     }
     const r = d.r;
-    return back + '<div class="dhead"><span class="label">Vorschlag ' + byWho(d) + " · " + R_KIND[d.kind][0] + "</span><h2>" + esc(r.name || "Routine") + '</h2><div class="sub">' + rMeta(r) + "</div></div>" +
+    return back + '<div class="dhead"><span class="label">Vorschlag von anderen · ' + R_KIND[d.kind][0] + "</span><h2>" + esc(r.name || "Routine") + '</h2><div class="sub">' + rMeta(r) + "</div></div>" +
       '<div class="ritems">' + r.items.map((x, n) => { x = rItem(x); return '<div class="ritem"><span class="rn">' + (n + 1) + "</span><span>" + esc(x.n) + '</span><span class="rdur">' + fmtDur(x.sec) + "</span></div>"; }).join("") + "</div>" +
       '<p class="hint-sm">' + (rPause(r) ? "Pause zwischen den Übungen: " + rPause(r) + " Sekunden." : "Ohne Pause zwischen den Übungen.") + "</p>" + take;
   }
@@ -1379,6 +1394,24 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   }
   // Neue Vorschläge sind angekommen: Ansicht auffrischen, solange gerade nichts getippt wird
   window.TA_onShared = () => { if (["group", "split", "routines", "split-edit"].includes(state.view) && !state.addEx && !(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName))) render(); };
+  // ===== Kurze Einführung beim ersten Anmelden: ein Schritt pro Tab, unten eingeblendet =====
+  const TUT = [
+    ["home", "Heute", ["Hier siehst du dein Training für heute mit Aufwärmen, Hauptteil und Cooldown.", "Tippe auf „Training starten“ und geh Schritt für Schritt durch. Deine Sätze werden gespeichert.", "Darunter stehen das Training von morgen, dein nächster Rest Day und der Wochenplan.", "Oben rechts öffnest du dein Profil mit Foto, Gewicht, Größe und Hell- oder Dunkelmodus."]],
+    ["split", "Split", ["Ein Split ist dein Wochenplan, zum Beispiel Kraftausdauer oder Maximalkraft.", "Tippe auf einen Split, schau dir die Woche an und aktiviere ihn.", "Mit „+ Eigenen Split erstellen“ baust du deinen eigenen Plan.", "Splits von anderen findest du darunter als Vorschlag."]],
+    ["rahmen", "Rahmen", ["Hier legst du deine Routinen für Aufwärmen und Cooldown an.", "Jede Übung bekommt eine Zeit in Sekunden, dazu eine Pause zwischen den Übungen.", "Im Training startest du die Routine mit Timer, Ton und Vibration."]],
+    ["exercises", "Training", ["Alle Übungen nach Bereichen: Kraft, Ausdauer und Skills.", "Bei jeder Übung siehst du, was du zuletzt geschafft hast, und deinen PR.", "Mit „+ Übung hinzufügen“ ergänzt du eigene Übungen oder übernimmst Vorschläge von anderen."]],
+    ["history", "Verlauf", ["Hier siehst du, welche Trainings du geschafft und welche du verpasst hast.", "Wechsle oben zwischen Wochen- und Monatsansicht.", "Grün heißt erledigt, rot verpasst. Viel Spaß beim Training!"]]
+  ];
+  function tutGo(i) { state.tut = i; const t = TUT[i][0]; state.planBack = false; state.tab = state.view = t; state.histMode = "week"; render(); screen.scrollTop = 0; }
+  function tutEnd() { state.tut = null; state.tutDone = true; state.tab = state.view = "home"; save(); render(); screen.scrollTop = 0; }
+  function tutOverlay() {
+    const i = state.tut, [, name, lines] = TUT[i], last = i === TUT.length - 1;
+    return '<div class="tut" role="dialog" aria-label="Einführung"><div class="tut-card">' +
+      '<div class="tut-head"><span class="label">Kurze Einführung · ' + (i + 1) + " von " + TUT.length + '</span><button type="button" class="tut-skip" data-tutskip>Überspringen</button></div>' +
+      "<h3>" + name + "</h3><ul>" + lines.map(l => "<li>" + l + "</li>").join("") + "</ul>" +
+      '<div class="tut-dots">' + TUT.map((_, j) => '<i class="' + (j === i ? "on" : "") + '"></i>').join("") + "</div>" +
+      '<div class="tut-btns">' + (i ? '<button type="button" class="cta ghost" data-tutprev>Zurück</button>' : "") + '<button type="button" class="cta" data-tutnext>' + (last ? "Los geht's" : "Weiter") + "</button></div></div></div>";
+  }
   const screen = document.getElementById("screen"), phone = document.getElementById("phone");
   // Routine abspielen: Übung mit Timer, dazwischen die Pause der Routine (Standard 10 Sekunden) mit Vorschau auf die nächste Übung
   let pTimer = null, audio = null;
@@ -1421,6 +1454,8 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     // Profilbild immer auf Höhe der Überschrift (wie bei „Hallo Nik“), auch im Verlauf unter dem Umschalter
     { const av = screen.querySelector(".avatar-btn"), h = screen.querySelector(".top h2"); if (av && h) av.style.top = Math.round(h.offsetTop - 12) + "px"; }
     document.querySelectorAll(".tabbar [data-tab]").forEach(b => { if (b.dataset.tab === state.tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
+    phone.classList.toggle("touring", state.tut != null); const old = phone.querySelector(".tut"); if (old) old.remove();
+    if (state.tut != null) { phone.style.setProperty("--tabh", (phone.querySelector(".tabbar") || {}).offsetHeight + "px"); phone.insertAdjacentHTML("beforeend", tutOverlay()); }
   }
 
   document.addEventListener("input", e => {
@@ -1487,6 +1522,11 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     if ("openplan" in el.dataset) { state.tab = "home"; state.view = "plan"; state.weekOffset = 0; state.planBack = true; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "plan") { state.planBack = false; state.view = "home"; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "detail" && state.planBack) { state.view = "plan"; render(); screen.scrollTop = 0; return; }
+    if ("tutnext" in el.dataset) { if (state.tut >= TUT.length - 1) tutEnd(); else tutGo(state.tut + 1); return; }
+    if ("tutprev" in el.dataset) { tutGo(Math.max(0, state.tut - 1)); return; }
+    if ("tutskip" in el.dataset) { tutEnd(); return; }
+    if ("tutstart" in el.dataset) { tutGo(0); return; }
+    if (state.tut != null) return;
     if (el.dataset.tab) { state.planBack = false; state.tab = state.view = el.dataset.tab; state.weekOffset = 0; state.histOffset = 0; render(); screen.scrollTop = 0; return; }
     if (el.dataset.open) { state.detail = el.dataset.open; state.view = "detail"; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "day-edit") { state.view = "split-edit"; render(); screen.scrollTop = 0; return; }
@@ -1550,7 +1590,8 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   });
 
   const now = new Date(); document.getElementById("clock").textContent = now.getHours() + ":" + String(now.getMinutes()).padStart(2, "0");
-  render();
+  // Einführung beim ersten Anmelden (nur mit Konten, nicht in der Vorschau)
+  if (window.TA_logout && !state.tutDone) tutGo(0); else render();
   };
   // ===== Konten (Firebase): erst anmelden, dann startet die App mit den Daten dieses Kontos =====
   // Ohne FIREBASE_CONFIG (z. B. in der Vorschau) startet die App direkt wie bisher.
@@ -1661,12 +1702,13 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   }
   function publishShared(json) {
     let st; try { st = JSON.parse(json); } catch (e) { return; }
-    const KEY = "trainingsapp-shared:" + uid, name = (st.profile || {}).name || "";
+    // Anonym: kein Name in der Ablage (alte Einträge mit Namen werden beim nächsten Speichern ohne Namen neu geschrieben)
+    const KEY = "trainingsapp-shared:" + uid;
     let prev = {}; try { prev = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
     const cur = myShared(st), done = Object.assign({}, prev);
     const saveMap = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} };
-    Object.entries(cur).forEach(([id, data]) => { const sig = hashStr(JSON.stringify(data) + "|" + name); if (prev[id] === sig) return;
-      db.collection("shared").doc(id).set(Object.assign({}, data, { by: uid, byName: name, updated: firebase.firestore.FieldValue.serverTimestamp() })).then(() => { done[id] = sig; saveMap(); }).catch(() => {}); });
+    Object.entries(cur).forEach(([id, data]) => { const sig = hashStr(JSON.stringify(data) + "|anon"); if (prev[id] === sig) return;
+      db.collection("shared").doc(id).set(Object.assign({}, data, { by: uid, updated: firebase.firestore.FieldValue.serverTimestamp() })).then(() => { done[id] = sig; saveMap(); }).catch(() => {}); });
     Object.keys(prev).filter(id => !cur[id]).forEach(id => db.collection("shared").doc(id).delete().then(() => { delete done[id]; saveMap(); }).catch(() => {}));
   }
   window.TA_cloud = json => { pending = json; clearTimeout(pushT); pushT = setTimeout(push, 1500); };
