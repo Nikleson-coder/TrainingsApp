@@ -415,6 +415,9 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 .tut { position: absolute; inset: 0; z-index: 20; }
 .tut.dim { background: rgba(0, 0, 0, .6); }
 .tut-hole { position: absolute; display: block; box-sizing: border-box; margin: 0; padding: 0; border: 0; -webkit-appearance: none; appearance: none; min-height: 0; background: transparent; box-shadow: 0 0 0 2.5px var(--accent), 0 0 0 9999px rgba(0, 0, 0, .6); }
+/* Während des Rundgangs scrollt nur die App selbst (kein Nachrutschen/Federn auf dem iPhone, Markierung bleibt auf dem Ziel) */
+.phone.touring .screen { overflow: hidden; }
+.tut { touch-action: none; overscroll-behavior: none; }
 .tut-hole.tap { cursor: pointer; animation: tutPulse 1.4s ease-in-out infinite; }
 @keyframes tutPulse { 50% { box-shadow: 0 0 0 4px var(--accent), 0 0 0 9999px rgba(0, 0, 0, .6); } }
 .tut-card { position: absolute; left: 14px; right: 14px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 12px 40px rgba(0, 0, 0, .3); font-family: var(--body); }
@@ -1435,9 +1438,10 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   function tutFix() {
     const hole = phone.querySelector(".tut-hole"), sel = state.tut != null && TUT[state.tut][1], el = hole && sel && phone.querySelector(sel); if (!el) return;
     const b = el.getBoundingClientRect(), hr = hole.getBoundingClientRect(), dx = b.left - hr.left, dy = b.top - hr.top;
-    if (Math.abs(dx) < .5 && Math.abs(dy) < .5 && Math.abs(b.height - hr.height) < .5 && Math.abs(b.width - hr.width) < .5) return;
+    if (Math.abs(dx) < .5 && Math.abs(dy) < .5 && Math.abs(b.height - hr.height) < .5 && Math.abs(b.width - hr.width) < .5) return false;
     hole.style.left = (parseFloat(hole.style.left) + dx) + "px"; hole.style.top = (parseFloat(hole.style.top) + dy) + "px"; hole.style.width = b.width + "px"; hole.style.height = b.height + "px";
     const c = phone.querySelector(".tut-card"); if (c && c.style.top) c.style.top = (parseFloat(c.style.top) + dy) + "px"; else if (c && c.style.bottom) c.style.bottom = (parseFloat(c.style.bottom) - dy) + "px";
+    return true;
   }
   function tutOverlay() {
     const [, sel, txt, tap] = TUT[state.tut], el = sel && phone.querySelector(sel), last = state.tut === TUT.length - 1;
@@ -1501,7 +1505,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     { const av = screen.querySelector(".avatar-btn"), h = screen.querySelector(".top h2"); if (av && h) av.style.top = Math.round(h.offsetTop - 12) + "px"; }
     document.querySelectorAll(".tabbar [data-tab]").forEach(b => { if (b.dataset.tab === state.tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
     phone.classList.toggle("touring", state.tut != null); const old = phone.querySelector(".tut"); if (old) old.remove();
-    if (state.tut != null) { phone.insertAdjacentHTML("beforeend", tutOverlay()); tutFix(); requestAnimationFrame(tutFix); setTimeout(tutFix, 350); }
+    if (state.tut != null) { phone.insertAdjacentHTML("beforeend", tutOverlay()); tutFix(); requestAnimationFrame(tutFix); }
   }
 
   document.addEventListener("input", e => {
@@ -1638,6 +1642,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   // Einführung beim ersten Anmelden (nur mit Konten, nicht in der Vorschau)
   window.addEventListener("resize", () => { if (state.tut != null) render(); });
   screen.addEventListener("scroll", () => { if (state.tut != null) tutFix(); }, { passive: true });
+  document.addEventListener("touchmove", e => { if (state.tut != null) e.preventDefault(); }, { passive: false });
   if (document.fonts) document.fonts.ready.then(() => { if (state.tut != null) render(); });
   if (window.TA_logout && !state.tutDone) tutGo(0); else render();
   };

@@ -126,3 +126,4 @@ Quelldatei: prototyp.html · Übungsdaten: uebungen.json (128 Übungen aus deine
 - v105 (15.10.): Rundgang gekürzt (28 Schritte): Aufwärmen/Hauptteil/Cooldown und Rahmen-Aufwärmen/Cooldown nur noch kurz zeigen mit „Weiter“ (kein Antippen und Zurück). Markierung liegt jetzt genau auf dem Rand des Ziels (gleiche Größe und Rundung, z. B. rund ums Profilbild), grüner Rand, alles andere abgedunkelt.
 - v106 (15.10.): Rundgang-Markierung wird nach dem Einblenden nachgemessen und exakt aufs Ziel geschoben (auf dem iPhone saß sie ein paar Pixel zu tief); iOS-Knopf-Standardstile an der Markierung entfernt.
 - v107 (15.10.): Rundgang ohne Schrittzähler („1 / 28“ entfernt, Nik fand das abschreckend).
+- v108 (15.10.): Rundgang: Seite kann während des Rundgangs nicht mehr von Hand scrollen oder federn (overflow hidden, touchmove blockiert). Vermutete Ursache für das Nachrutschen der Markierung auf dem iPhone; Markierung erscheint sofort ohne Ausblenden.
