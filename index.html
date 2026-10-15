@@ -230,7 +230,7 @@ button { font-family: inherit; }
 .player .p-next { font-size: .85rem; font-weight: 700; color: var(--warm); text-transform: uppercase; letter-spacing: .06em; }
 .player .p-time { font-family: var(--display); font-weight: 800; font-size: 5.4rem; line-height: 1; font-variant-numeric: tabular-nums; color: var(--fg); }
 .player.rest .p-time { color: var(--warm); }
-.player .p-check svg { width: 96px; height: 96px; stroke: var(--ok); }
+.player .p-check svg { width: 140px; height: 140px; fill: none; stroke: var(--ok); stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
 .player .p-ctrl { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; } .player .p-ctrl .cta { padding: 12px 6px; font-size: .86rem; }
 .player.done .p-ctrl { grid-template-columns: 1fr; }
 .exadd { background: var(--surface); border: 1.5px dashed var(--line); border-radius: 18px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
@@ -1339,7 +1339,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     return '<div class="player' + (P.rest ? " rest" : "") + '"><div class="p-top"><span class="label">' + (P.rest ? "Pause · gleich geht's weiter" : R_KIND[P.k][0] + " · Übung " + (P.i + 1) + " von " + items.length) + "</span>" +
       (P.rest ? '<span class="p-next">Nächste Übung</span><h2>' + esc(next.n) + "</h2>" : "<h2>" + esc(cur.n) + "</h2>") + "</div>" +
       '<div class="p-time" id="ptime">' + time + "</div>" +
-      '<div class="p-ctrl"><button type="button" class="cta ghost" data-pstop>Beenden</button><button type="button" class="cta" data-ppause>' + (P.left != null ? "▶ Weiter" : "Pause") + '</button><button type="button" class="cta ghost" data-pskip>Nächste Übung ›</button></div></div>';
+      '<div class="p-ctrl"><button type="button" class="cta ghost" data-pstop>Beenden</button><button type="button" class="cta" data-ppause>' + (P.left != null ? "▶ Weiter" : "Pause") + '</button><button type="button" class="cta ghost" data-pskip>Nächste Übung</button></div></div>';
   }
 
   function render() {
