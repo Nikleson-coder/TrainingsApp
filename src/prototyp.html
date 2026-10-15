@@ -7,8 +7,8 @@
 :root {
   --page-bg: #EEF1EE; --page-fg: #1A231E; --page-muted: #5B675F; --page-line: #D5DCD6; --bezel: #1A231E; --seg-bg: #DFE5E0; --seg-on: #FFFFFF;
   --font-ui: "Figtree", system-ui, sans-serif;
-  /* App, Design "Klar": hell = weiß */
-  --a-bg: #FFFFFF; --a-surface: #F4F6F4; --a-fg: #16201A; --a-muted: #66736B; --a-line: #E2E7E3; --a-accent: #4A7F63; --a-accent-fg: #FFFFFF; --a-soft: #E9F0EB; --a-statusbg: #FFFFFF; --a-tabbg: #FFFFFF;
+  /* App, Design "Klar": hell = sanftes Hellgrau (seit 15.10. statt Weiß), Kästchen etwas dunkler */
+  --a-bg: #F4F6F4; --a-surface: #E8ECE9; --a-fg: #16201A; --a-muted: #626F67; --a-line: #D8DED9; --a-accent: #4A7F63; --a-accent-fg: #FFFFFF; --a-soft: #E1EAE3; --a-statusbg: #F4F6F4; --a-tabbg: #F4F6F4;
   /* Trainingsarten und Phasen */
   --run: #C98B76; --run-soft: #F5EBE6; --strength: #7179B5; --strength-soft: #ECEDF5; --rest: #B5A684; --rest-soft: #F4F0E7; --bike: #6E9C9E; --bike-soft: #E7F0F0; --warm: #D5AE74; --main: #7DA48D; --cool: #7FA0C2; --ok: #4A7F63; --miss: #AE6E64;
 }
@@ -25,7 +25,7 @@
   color-scheme: dark;
 }
 /* Vorschau-Umschalter im Prototyp: erzwingt hell oder dunkel nur im Handy */
-.phone[data-mode="light"] { --a-bg: #FFFFFF; --a-surface: #F4F6F4; --a-fg: #16201A; --a-muted: #66736B; --a-line: #E2E7E3; --a-accent: #4A7F63; --a-accent-fg: #FFFFFF; --a-soft: #E9F0EB; --a-statusbg: #FFFFFF; --a-tabbg: #FFFFFF; --run: #C98B76; --run-soft: #F5EBE6; --strength: #7179B5; --strength-soft: #ECEDF5; --rest: #B5A684; --rest-soft: #F4F0E7; --bike: #6E9C9E; --bike-soft: #E7F0F0; --warm: #D5AE74; --main: #7DA48D; --cool: #7FA0C2; --ok: #4A7F63; --miss: #AE6E64; color-scheme: light; }
+.phone[data-mode="light"] { --a-bg: #F4F6F4; --a-surface: #E8ECE9; --a-fg: #16201A; --a-muted: #626F67; --a-line: #D8DED9; --a-accent: #4A7F63; --a-accent-fg: #FFFFFF; --a-soft: #E1EAE3; --a-statusbg: #F4F6F4; --a-tabbg: #F4F6F4; --run: #C98B76; --run-soft: #F5EBE6; --strength: #7179B5; --strength-soft: #ECEDF5; --rest: #B5A684; --rest-soft: #F4F0E7; --bike: #6E9C9E; --bike-soft: #E7F0F0; --warm: #D5AE74; --main: #7DA48D; --cool: #7FA0C2; --ok: #4A7F63; --miss: #AE6E64; color-scheme: light; }
 .phone[data-mode="dark"] { --a-bg: #111613; --a-surface: #1A211D; --a-fg: #E8EEE9; --a-muted: #96A39B; --a-line: #2A332E; --a-accent: #45B880; --a-accent-fg: #0B1A12; --a-soft: #1D3328; --a-statusbg: #111613; --a-tabbg: #1A211D; --run: #F07A5A; --run-soft: #3A2019; --strength: #7C86FF; --strength-soft: #22264F; --rest: #CDB57A; --rest-soft: #332C1C; --bike: #72C2C4; --bike-soft: #1A3233; --warm: #F0AE4E; --main: #45B880; --cool: #66A6E6; --ok: #45B880; --miss: #E07467; color-scheme: dark; }
 
 * { box-sizing: border-box; }
