@@ -410,6 +410,14 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 .field input { width: 5.5rem; font: 600 1rem var(--body); text-align: right; padding: 7px 10px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--fg); font-variant-numeric: tabular-nums; }
 .field input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .hint-sm { font-size: .82rem; color: var(--muted); margin: 0; }
+/* Vorschläge von anderen */
+.sugs { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 18px; background: var(--soft); border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent); }
+.sug { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; text-align: left; font: inherit; color: var(--fg); background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 10px 12px; cursor: pointer; }
+.sug .gx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.sug .gx strong { font-size: .95rem; }
+.sug .gx small { color: var(--muted); font-size: .78rem; }
+.cta.sm { flex: none; padding: 7px 12px; font-size: .8rem; border-radius: 10px; }
+.sug-blocks { display: block; color: var(--muted); font-size: .76rem; font-weight: 500; }
 /* Anmeldung und Registrierung */
 .phone.auth .tabbar { display: none; }
 .auth { display: flex; flex-direction: column; gap: 14px; margin: auto 0; padding: 12px 0 28px; }
@@ -831,7 +839,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       (list.length ? '<div class="groups">' + list.map(r =>
         '<button type="button" class="mini rcard" data-ropen="' + r.id + '"><span class="rc-row"><strong>' + (esc(r.name) || "Ohne Namen") + '</strong><span class="wc-go">›</span></span><span class="meta">' + rMeta(r) + "</span></button>").join("") + "</div>"
         : '<div class="pr-empty">Noch keine Routine. Erstelle deine erste.</div>') +
-      '<button type="button" class="split-new" data-rnew>+ Neue Routine erstellen</button>';
+      '<button type="button" class="split-new" data-rnew>+ Neue Routine erstellen</button>' + sugBox("Routinen von anderen", sugRoutines(state.rKind), sugRowRoutine);
   }
   function viewRoutine() {
     const r = state.routines[state.rKind].find(x => x.id === state.rId);
@@ -845,6 +853,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
         : '<div class="pr-empty">Noch keine Übungen. Füge unten die erste hinzu.</div>') +
       '<div class="radd"><input id="rItem" class="tin" type="text" placeholder="Übung, z. B. Armkreisen"><label class="rsec"><input id="rSec" type="text" inputmode="numeric" placeholder="60"><span>Sek.</span></label><button type="button" class="cta" data-ritemadd>+</button></div>' +
       '<div class="radd rpause"><div class="tin">Pause</div><label class="rsec"><input id="rPause" type="text" inputmode="numeric" value="' + rPause(r) + '"><span>Sek.</span></label><button type="button" class="cta" data-rpausesave aria-label="Pause speichern">✓</button></div>' +
+      (r.items.length ? "" : sugBox("Routinen von anderen", sugRoutines(state.rKind), sugRowRoutine)) +
       '<button type="button" class="cta ghost danger" data-rdelete>Routine löschen</button>';
   }
 
@@ -958,7 +967,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
         '<div class="facts"><span class="fact">' + trainCount(s) + "× pro Woche</span></div>" + wbars(s) + "</button>";
     }).join("");
     return '<div class="top"><span class="date" aria-hidden="true">&nbsp;</span><h2>Dein Split</h2></div>' + cards +
-      '<button type="button" class="split-new" data-dnew>+ Eigenen Split erstellen</button>';
+      '<button type="button" class="split-new" data-dnew>+ Eigenen Split erstellen</button>' + sugBox("Splits von anderen", sugSplits(), sugRowSplit);
   }
   function viewSplitDetail() {
     const s = splitById(state.splitDetail), on = s.id === state.split;
@@ -994,7 +1003,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     return '<button type="button" class="back" data-back>‹ Abbrechen</button>' +
       '<div class="dhead"><span class="label">' + (dr.isNew ? "Neuer Split" : "Split bearbeiten") + "</span><h2>" + (dr.name ? esc(dr.name) : "Eigener Split") + "</h2></div>" +
       '<div class="fields"><div class="field fcol"><label for="dName">Name des Splits</label><input id="dName" class="tin" type="text" placeholder="z. B. Mein Ganzkörper-Split" value="' + esc(dr.name) + '" data-df="name"></div></div>' +
-      (state.draftErr ? '<p class="err">' + state.draftErr + "</p>" : "") +
+      (state.draftErr ? '<p class="err">' + state.draftErr + "</p>" : "") + (dr.isNew ? sugBox("Splits von anderen", sugSplits(), sugRowSplit) : "") +
       '<div class="load"><span class="label">Belastung</span><div class="load-grid">' + dr.load.map(([k, v], i) => '<label><span>' + k + '</span><input class="tin sm" type="text" placeholder="' + ["z. B. 8–12", "z. B. 70 % 1RM", "z. B. 3–4", "z. B. 90 s"][i] + '" value="' + esc(v) + '" data-dl="' + i + '"></label>').join("") + "</div></div>" +
       '<div><span class="label">Wochenablauf</span><div class="plist" style="margin-top:8px">' + days + "</div></div>" +
       '<div class="btns"><button type="button" class="cta finish" data-dsave>Split speichern</button>' +
@@ -1212,7 +1221,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       return '<button type="button" class="back" data-back>‹ Training</button>' +
         '<div class="dhead"><span class="label">' + (g.skill ? "Skills" : "Kraft") + "</span><h2>" + g.name + '</h2><div class="sub">' + all.length + (all.length === 1 ? " Übung" : " Übungen") + "</div></div>" +
         '<div class="exlist">' + (all.map(x => '<article class="ex"><div class="ex-top"><h4>' + esc(x.n) + '</h4><small class="ex-type">' + EX_TYPES.find(y => y[0] === (x.t || exType(x.n)))[1] + "</small></div>" + recRows(x.n) + "</article>").join("") ||
-          '<div class="pr-empty"><strong>Noch keine Übungen</strong>Füge unten deine erste Übung hinzu.</div>') + "</div>" + add;
+          '<div class="pr-empty"><strong>Noch keine Übungen</strong>Füge unten deine erste Übung hinzu.</div>') + "</div>" + add + sugBox("Übungen von anderen", sugEx(g.id), sugRowEx);
     }
     const unit = g.cardio ? (g.muscles.length === 1 ? " Bereich" : " Bereiche") : " Muskeln";
     return '<button type="button" class="back" data-back>‹ ' + (g.cardio ? "Training" : "Alle Muskelgruppen") + "</button>" +
@@ -1308,6 +1317,68 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       '<div class="exlist">' + (cards || '<div class="pr-empty"><strong>Noch keine Übungen</strong>Die Übungen für ' + (g.cardio ? m : "diesen Muskel") + ' trägst du neu ein.</div>') + "</div>";
   }
 
+  // ===== Vorschläge von anderen: eigene Übungen, Splits und Routinen anderer Konten (gemeinsame Ablage in Firebase) =====
+  const myUid = () => (window.TA_uid && window.TA_uid()) || null;
+  const SHARED = () => (window.TA_shared ? window.TA_shared() : []).filter(d => d && d.by !== myUid());
+  const normN = s => String(s == null ? "" : s).trim().toLowerCase();
+  const itemsSig = items => JSON.stringify((items || []).map(x => [normN(rItem(x).n), rItem(x).sec]));
+  const splitSig = s => JSON.stringify([normN(s.name), (s.days || []).map(d => [d.type, normN(d.title), d.blocks || []])]);
+  const uniq = (list, key) => { const seen = new Set(); return list.filter(d => { const k = key(d); if (seen.has(k)) return false; seen.add(k); return true; }); };
+  const D_TYPES = ["strength", "run", "skill", "rest", "bike"];
+  // Fremde Splits nur übernehmen, wenn sie zur App passen (7 Tage, bekannte Arten und Bereiche)
+  const validSplit = s => s && typeof s.name === "string" && Array.isArray(s.days) && s.days.length === 7 && s.days.every(d => d && D_TYPES.includes(d.type) && (!d.blocks || (Array.isArray(d.blocks) && d.blocks.every(b => Array.isArray(b) && ALL_GROUPS.some(g => g.id === b[0]) && b[1] > 0 && b[1] <= 10))));
+  const validItems = items => Array.isArray(items) && items.length > 0 && items.every(x => x && typeof x.n === "string" && x.sec > 0);
+  const sugEx = g => uniq(SHARED().filter(d => d.type === "ex" && d.g === g && d.ex && typeof d.ex.n === "string" && d.ex.n.trim() && !(EXERCISES[g] || []).some(x => normN(x.n) === normN(d.ex.n))), d => normN(d.ex.n));
+  const sugSplits = () => uniq(SHARED().filter(d => d.type === "split" && validSplit(d.split) && !allSplits().some(s => splitSig(s) === splitSig(d.split))), d => splitSig(d.split));
+  const sugRoutines = k => uniq(SHARED().filter(d => d.type === "routine" && d.kind === k && d.r && validItems(d.r.items) && !state.routines[k].some(r => itemsSig(r.items) === itemsSig(d.r.items))), d => itemsSig(d.r.items));
+  const byWho = d => d.byName ? "von " + esc(d.byName) : "von jemand anderem";
+  const sugBox = (title, list, row) => list.length ? '<div class="sugs"><span class="label">Vorschläge · ' + title + "</span>" + list.map(row).join("") + "</div>" : "";
+  const sugRowEx = d => '<div class="sug"><span class="gx"><strong>' + esc(d.ex.n) + "</strong><small>" + (EX_TYPES.find(y => y[0] === d.ex.t) || EX_TYPES[0])[1] + (d.ex.sec ? " · in Sekunden" : "") + " · " + byWho(d) + '</small></span><button type="button" class="cta sm" data-sugtake="' + esc(d.id) + '">Übernehmen</button></div>';
+  const sugRowOpen = (d, name, meta) => '<button type="button" class="sug" data-sugopen="' + esc(d.id) + '"><span class="gx"><strong>' + esc(name) + "</strong><small>" + meta + " · " + byWho(d) + "</small></span>" + chev + "</button>";
+  const sugRowSplit = d => sugRowOpen(d, d.split.name, trainCount(d.split) + "× pro Woche");
+  const sugRowRoutine = d => sugRowOpen(d, d.r.name || "Routine", rMeta(d.r));
+  function viewSug() {
+    const d = SHARED().find(x => x.id === state.sugId), from = state.sugFrom;
+    const back = '<button type="button" class="back" data-sugback>‹ ' + (from === "split-edit" ? "Neuer Split" : from === "routine" ? "Routine" : d && d.type === "routine" ? "Routinen" : "Splits") + "</button>";
+    if (!d) return back + '<div class="pr-empty">Dieser Vorschlag ist nicht mehr verfügbar.</div>';
+    const take = '<div class="btns"><button type="button" class="cta finish" data-sugtake="' + esc(d.id) + '">Übernehmen</button></div>';
+    if (d.type === "split") {
+      const s = d.split, load = (s.load || []).filter(l => Array.isArray(l) && l[1]);
+      const rows = s.days.map((x, i) => '<div class="prow t-' + x.type + (x.type === "rest" ? " rest" : "") + '" style="cursor:default"><span class="d"><small>' + ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"][i] + '</small></span><span class="t"><span class="chip">' + TYPE_LABEL[x.type] + "</span><strong>" + (x.type === "rest" ? "Erholung" : esc(x.title || TYPE_LABEL[x.type])) + "</strong>" +
+        (x.type !== "rest" && x.blocks && x.blocks.length ? '<small class="sug-blocks">' + esc(blockSum(x.blocks)) + "</small>" : "") + "</span></div>").join("");
+      return back + '<div class="dhead"><span class="label">Vorschlag ' + byWho(d) + "</span><h2>" + esc(s.name) + '</h2><div class="sub">' + trainCount(s) + "× pro Woche</div></div>" +
+        (load.length ? '<div class="facts">' + load.map(l => '<span class="fact">' + esc(l[0]) + ": " + esc(l[1]) + "</span>").join("") + "</div>" : "") +
+        '<div><span class="label">Wochenablauf</span><div class="plist" style="margin-top:8px">' + rows + "</div></div>" + take;
+    }
+    const r = d.r;
+    return back + '<div class="dhead"><span class="label">Vorschlag ' + byWho(d) + " · " + R_KIND[d.kind][0] + "</span><h2>" + esc(r.name || "Routine") + '</h2><div class="sub">' + rMeta(r) + "</div></div>" +
+      '<div class="ritems">' + r.items.map((x, n) => { x = rItem(x); return '<div class="ritem"><span class="rn">' + (n + 1) + "</span><span>" + esc(x.n) + '</span><span class="rdur">' + fmtDur(x.sec) + "</span></div>"; }).join("") + "</div>" +
+      '<p class="hint-sm">' + (rPause(r) ? "Pause zwischen den Übungen: " + rPause(r) + " Sekunden." : "Ohne Pause zwischen den Übungen.") + "</p>" + take;
+  }
+  function takeSug(d) {
+    if (d.type === "ex") {
+      const g = d.g, x = { n: d.ex.n.trim(), t: EX_TYPES.some(y => y[0] === d.ex.t) ? d.ex.t : "w" };
+      ["sec", "count", "time", "kcal"].forEach(f => { if (d.ex[f]) x[f] = true; });
+      EXERCISES[g] = EXERCISES[g] || []; if (!EXERCISES[g].some(y => normN(y.n) === normN(x.n))) { EXERCISES[g].push(x); (state.userEx[g] = state.userEx[g] || []).push(x); }
+      save(); render(); return;
+    }
+    if (d.type === "split") {
+      const id = "u" + Date.now(), s = d.split;
+      state.userSplits[id] = { id, name: String(s.name), focus: "Eigener Split", custom: true, load: LOAD_KEYS.map(k => [k, String(((s.load || []).find(l => Array.isArray(l) && l[0] === k) || [])[1] || "")]),
+        days: s.days.map(x => x.type === "rest" ? { type: "rest" } : { type: x.type, title: String(x.title || TYPE_LABEL[x.type]), sub: (x.blocks || []).length ? x.blocks.map(b => gName(b[0])).join(", ") : TYPE_LABEL[x.type], dur: [10, 50, 10], blocks: (x.blocks || []).map(b => [b[0], +b[1]]) }) };
+      state.draft = null; state.draftErr = ""; state.splitDetail = id; state.tab = "split"; state.view = "split-detail"; save(); render(); screen.scrollTop = 0; return;
+    }
+    if (d.type === "routine") {
+      const k = d.kind, items = d.r.items.map(x => ({ n: String(x.n), sec: Math.max(1, Math.round(+x.sec)) }));
+      let r = state.sugFill && state.routines[k].find(x => x.id === state.sugFill && !x.items.length);
+      if (r) { r.name = String(d.r.name || r.name); r.items = items; }
+      else { r = { id: "r" + Date.now().toString(36), name: String(d.r.name || "Routine"), items }; state.routines[k].push(r); }
+      if (d.r.pause != null) r.pause = Math.max(0, Math.min(600, Math.round(+d.r.pause) || 0)); else delete r.pause;
+      state.sugFill = null; state.rKind = k; state.rId = r.id; state.view = "routine"; save(); render(); screen.scrollTop = 0;
+    }
+  }
+  // Neue Vorschläge sind angekommen: Ansicht auffrischen, solange gerade nichts getippt wird
+  window.TA_onShared = () => { if (["group", "split", "routines", "split-edit"].includes(state.view) && !state.addEx && !(document.activeElement && /INPUT|TEXTAREA/.test(document.activeElement.tagName))) render(); };
   const screen = document.getElementById("screen"), phone = document.getElementById("phone");
   // Routine abspielen: Übung mit Timer, dazwischen die Pause der Routine (Standard 10 Sekunden) mit Vorschau auf die nächste Übung
   let pTimer = null, audio = null;
@@ -1345,7 +1416,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     phone.dataset.mode = state.mode;
     document.querySelectorAll("[data-mode-btn]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.modeBtn === state.mode)));
     document.getElementById("variantNote").textContent = NOTES[state.mode];
-    screen.innerHTML = state.view === "split-edit" && state.draft ? viewSplitEdit() : state.view === "day-edit" && state.draft ? viewDayEdit() : state.view === "workout" && state.wo ? viewWorkout() : state.view === "template" ? viewTemplate() : state.view === "detail" ? viewDetail() : state.view === "plan" ? viewPlan() : state.view === "history" ? viewHistory() : state.view === "rahmen" ? viewRahmen() : state.view === "routines" ? viewRoutines() : state.view === "routine" ? viewRoutine() : state.view === "split" ? viewSplits() : state.view === "split-detail" ? viewSplitDetail() : state.view === "exercises" ? viewExercises() : state.view === "group" ? viewGroup() : state.view === "muscle" ? viewMuscle() : state.view === "profile" ? viewProfile() : viewHome();
+    screen.innerHTML = state.view === "split-edit" && state.draft ? viewSplitEdit() : state.view === "day-edit" && state.draft ? viewDayEdit() : state.view === "workout" && state.wo ? viewWorkout() : state.view === "template" ? viewTemplate() : state.view === "detail" ? viewDetail() : state.view === "plan" ? viewPlan() : state.view === "history" ? viewHistory() : state.view === "rahmen" ? viewRahmen() : state.view === "routines" ? viewRoutines() : state.view === "routine" ? viewRoutine() : state.view === "split" ? viewSplits() : state.view === "split-detail" ? viewSplitDetail() : state.view === "exercises" ? viewExercises() : state.view === "group" ? viewGroup() : state.view === "muscle" ? viewMuscle() : state.view === "profile" ? viewProfile() : state.view === "sug" ? viewSug() : viewHome();
     if (["home", "split", "rahmen", "exercises", "history"].includes(state.view)) screen.insertAdjacentHTML("afterbegin", '<button type="button" class="avatar avatar-btn" data-profile aria-label="Profil öffnen">' + avatarInner() + "</button>");
     // Profilbild immer auf Höhe der Überschrift (wie bei „Hallo Nik“), auch im Verlauf unter dem Umschalter
     { const av = screen.querySelector(".avatar-btn"), h = screen.querySelector(".top h2"); if (av && h) av.style.top = Math.round(h.offsetTop - 12) + "px"; }
@@ -1382,6 +1453,9 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const el = e.target.closest("button"); if (!el) return;
     if (el.dataset.modeBtn) { state.mode = el.dataset.modeBtn; save(); render(); return; }
     if (!phone.contains(el)) return;
+    if (el.dataset.sugopen) { state.sugId = el.dataset.sugopen; state.sugFrom = state.view; state.sugFill = state.view === "routine" ? state.rId : null; state.view = "sug"; render(); screen.scrollTop = 0; return; }
+    if ("sugback" in el.dataset) { state.view = state.sugFrom || "split"; render(); screen.scrollTop = 0; return; }
+    if (el.dataset.sugtake) { const d = SHARED().find(x => x.id === el.dataset.sugtake); if (d) takeSug(d); return; }
     if (el.dataset.rkind) { state.rKind = el.dataset.rkind; state.view = "routines"; render(); screen.scrollTop = 0; return; }
     if (el.dataset.ropen) { state.rId = el.dataset.ropen; state.view = "routine"; render(); screen.scrollTop = 0; return; }
     if ("rnew" in el.dataset) { const r = { id: "r" + Date.now().toString(36), name: (ORD[state.routines[state.rKind].length] || (state.routines[state.rKind].length + 1) + ".") + " Routine", items: [] }; state.routines[state.rKind].push(r); state.rId = r.id; state.view = "routine"; save(); render(); screen.scrollTop = 0; const i = document.getElementById("rName"); if (i) i.focus(); return; }
@@ -1555,7 +1629,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     data.savedAt = data.savedAt || Date.now();
     const json = JSON.stringify(data);
     localStorage.setItem(key, json); localStorage.setItem(LAST_UID, uid);
-    pending = json; push();
+    pending = json; push(); fetchShared();
     startApp(key);
   }
 
@@ -1563,7 +1637,38 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   let pending = null, pushT = null;
   function push() { clearTimeout(pushT); if (!pending || !db || !uid) return; const json = pending; pending = null; let pr = {};
     try { const p = JSON.parse(json).profile || {}; pr = { name: p.name || "", weight: p.weight || "", height: p.height || "" }; } catch (e) {}
-    db.collection("users").doc(uid).set({ state: json, profile: pr, updated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(() => { pending = pending || json; }); }
+    db.collection("users").doc(uid).set({ state: json, profile: pr, updated: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true }).catch(() => { pending = pending || json; });
+    publishShared(json); }
+
+  // Gemeinsame Ablage „shared“: eigene Übungen, eigene Splits und Routinen mit Übungen sehen alle anderen als Vorschlag.
+  // Nur Geändertes wird geschrieben; was man selbst löscht, verschwindet auch aus der Ablage.
+  let shared = [], sharedAt = 0;
+  window.TA_shared = () => shared;
+  window.TA_uid = () => uid;
+  function fetchShared() {
+    if (!db || !uid) return; sharedAt = Date.now();
+    db.collection("shared").get().then(q => { const next = q.docs.map(x => Object.assign({}, x.data(), { id: x.id }));
+      const changed = JSON.stringify(next) !== JSON.stringify(shared); shared = next; if (changed && started && window.TA_onShared) window.TA_onShared(); }).catch(() => {});
+  }
+  document.addEventListener("visibilitychange", () => { if (document.visibilityState === "visible" && Date.now() - sharedAt > 60000) fetchShared(); });
+  const hashStr = t => { let h = 5381; for (let i = 0; i < t.length; i++) h = (h * 33 + t.charCodeAt(i)) >>> 0; return h.toString(36); };
+  function myShared(st) {
+    const out = {}, put = (key, data) => { out[uid + "_" + hashStr(key)] = data; };
+    Object.entries(st.userEx || {}).forEach(([g, list]) => (list || []).forEach(x => { if (x && typeof x === "object" && x.n) { const ex = { n: x.n, t: x.t || "w" }; ["sec", "count", "time", "kcal"].forEach(f => { if (x[f]) ex[f] = true; }); put("ex|" + g + "|" + x.n, { type: "ex", g, ex }); } }));
+    Object.values(st.userSplits || {}).forEach(sp => { if (sp && sp.custom && String(sp.id).startsWith("u")) put("split|" + sp.id, { type: "split", split: { name: sp.name, load: sp.load || [], days: (sp.days || []).map(d => d.type === "rest" ? { type: "rest" } : { type: d.type, title: d.title || "", blocks: d.blocks || [] }) } }); });
+    ["warm", "cool"].forEach(k => ((st.routines || {})[k] || []).forEach(r => { if (r && (r.items || []).length) put("routine|" + k + "|" + r.id, { type: "routine", kind: k, r: Object.assign({ name: r.name || "", items: r.items.map(x => typeof x === "string" ? { n: x, sec: 60 } : { n: x.n, sec: x.sec }) }, r.pause != null ? { pause: r.pause } : {}) }); }));
+    return out;
+  }
+  function publishShared(json) {
+    let st; try { st = JSON.parse(json); } catch (e) { return; }
+    const KEY = "trainingsapp-shared:" + uid, name = (st.profile || {}).name || "";
+    let prev = {}; try { prev = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) {}
+    const cur = myShared(st), done = Object.assign({}, prev);
+    const saveMap = () => { try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {} };
+    Object.entries(cur).forEach(([id, data]) => { const sig = hashStr(JSON.stringify(data) + "|" + name); if (prev[id] === sig) return;
+      db.collection("shared").doc(id).set(Object.assign({}, data, { by: uid, byName: name, updated: firebase.firestore.FieldValue.serverTimestamp() })).then(() => { done[id] = sig; saveMap(); }).catch(() => {}); });
+    Object.keys(prev).filter(id => !cur[id]).forEach(id => db.collection("shared").doc(id).delete().then(() => { delete done[id]; saveMap(); }).catch(() => {}));
+  }
   window.TA_cloud = json => { pending = json; clearTimeout(pushT); pushT = setTimeout(push, 1500); };
   document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") push(); });
   window.TA_logout = async () => { push(); try { await auth.signOut(); } catch (e) {} localStorage.removeItem(LAST_UID); location.replace(APP_URL); };
