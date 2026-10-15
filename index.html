@@ -224,7 +224,7 @@ button { font-family: inherit; }
 .rdur { color: var(--muted); font-size: .82rem; font-weight: 600; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .rsec { display: flex; align-items: center; gap: 4px; color: var(--muted); font-size: .85rem; }
 .rsec input { width: 3.6rem; font: 600 .95rem var(--body); text-align: right; padding: 10px 8px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
-.radd .cta { padding: 10px 16px; font-size: 1.1rem; }
+.radd .cta { padding: 10px 0; width: 48px; flex: none; font-size: 1.1rem; }
 .phone.playing .tabbar { display: none; }
 .player { min-height: 100%; display: flex; flex-direction: column; justify-content: space-between; gap: 24px; padding: 28px 4px 12px; text-align: center; }
 .player .p-top { display: flex; flex-direction: column; gap: 10px; align-items: center; }
@@ -247,6 +247,8 @@ button { font-family: inherit; }
 .ritem .rn { width: 24px; height: 24px; border-radius: 50%; background: var(--soft); color: var(--muted); display: grid; place-items: center; font-size: .75rem; font-weight: 700; flex: none; }
 .rdel { background: none; border: 0; color: var(--muted); font-size: .9rem; cursor: pointer; padding: 4px 6px; }
 .radd { display: flex; gap: 8px; }
+.radd.rpause { margin-top: -6px; }
+.radd.rpause .tin { display: flex; align-items: center; color: var(--muted); }
 .radd .tin { flex: 1; min-width: 0; font: 500 .95rem var(--body); padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--surface); color: var(--fg); }
 .rc-row { display: flex; justify-content: space-between; align-items: center; }
 .rc-row .wc-go { color: var(--muted); font-size: 1.3rem; line-height: 1; }
@@ -821,7 +823,8 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
   // Inhalt einer Routine: { n: Name, sec: Dauer in Sekunden } (ältere Einträge waren reine Texte)
   const rItem = x => typeof x === "string" ? { n: x, sec: 60 } : x;
   const fmtDur = sec => sec >= 60 ? Math.floor(sec / 60) + (sec % 60 ? ":" + String(sec % 60).padStart(2, "0") : "") + " Min" : sec + " Sek.";
-  const rTotal = r => r.items.reduce((a, x) => a + rItem(x).sec, 0) + Math.max(0, r.items.length - 1) * 10;
+  const rPause = r => (r && r.pause != null ? r.pause : 10);
+  const rTotal = r => r.items.reduce((a, x) => a + rItem(x).sec, 0) + Math.max(0, r.items.length - 1) * rPause(r);
   const rMeta = r => r.items.length ? r.items.length + (r.items.length === 1 ? " Übung" : " Übungen") + " · " + fmtDur(rTotal(r)) : "Noch keine Übungen";
   function viewRahmen() {
     return '<div class="top"><span class="date" aria-hidden="true">&nbsp;</span><h2>Rahmen</h2></div>' +
@@ -845,9 +848,10 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
       '<div class="fields"><div class="field fcol"><label for="rName">Name der Routine</label><input id="rName" class="tin" type="text" placeholder="z. B. Mein Standard-Aufwärmen" value="' + esc(r.name) + '" data-rname></div></div>' +
       '<span class="label">Ablauf · ' + rMeta(r) + " gesamt</span>" +
       (r.items.length ? '<div class="ritems">' + r.items.map((x, i) => { x = rItem(x); return '<div class="ritem"><span class="rn">' + (i + 1) + "</span><span>" + esc(x.n) + '</span><span class="rdur">' + fmtDur(x.sec) + '</span><button type="button" class="rdel" data-ritemdel="' + i + '" aria-label="Entfernen">✕</button></div>'; }).join("") + "</div>" +
-        '<p class="hint-sm">Zwischen den Übungen kommt automatisch eine Pause von 10 Sekunden.</p>'
+        '<p class="hint-sm">' + (rPause(r) ? "Zwischen den Übungen kommt automatisch eine Pause von " + rPause(r) + " Sekunden." : "Ohne Pause zwischen den Übungen.") + "</p>"
         : '<div class="pr-empty">Noch keine Übungen. Füge unten die erste hinzu.</div>') +
       '<div class="radd"><input id="rItem" class="tin" type="text" placeholder="Übung, z. B. Armkreisen"><label class="rsec"><input id="rSec" type="text" inputmode="numeric" placeholder="60"><span>Sek.</span></label><button type="button" class="cta" data-ritemadd>+</button></div>' +
+      '<div class="radd rpause"><div class="tin">Pause</div><label class="rsec"><input id="rPause" type="text" inputmode="numeric" value="' + rPause(r) + '"><span>Sek.</span></label><button type="button" class="cta" data-rpausesave aria-label="Pause speichern">✓</button></div>' +
       '<button type="button" class="cta ghost danger" data-rdelete>Routine löschen</button>';
   }
 
@@ -1313,8 +1317,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
   }
 
   const screen = document.getElementById("screen"), phone = document.getElementById("phone");
-  // Routine abspielen: Übung mit Timer, dazwischen 10 Sekunden Pause mit Vorschau auf die nächste Übung
-  const PAUSE = 10;
+  // Routine abspielen: Übung mit Timer, dazwischen die Pause der Routine (Standard 10 Sekunden) mit Vorschau auf die nächste Übung
   let pTimer = null, audio = null;
   function beep(hi) { try { audio = audio || new (window.AudioContext || window.webkitAudioContext)(); const o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = hi ? 880 : 660; g.gain.setValueAtTime(.2, audio.currentTime); g.gain.exponentialRampToValueAtTime(.001, audio.currentTime + .35); o.connect(g); g.connect(audio.destination); o.start(); o.stop(audio.currentTime + .35); } catch (e) {} try { navigator.vibrate && navigator.vibrate(hi ? [120, 60, 120] : 150); } catch (e) {} }
   const playRoutine = () => { const wo = state.wo, k = state.play.k; return state.routines[k].find(x => x.id === (wo.rt || {})[k]); };
@@ -1327,8 +1330,8 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const r = playRoutine(), rem = Math.max(0, Math.ceil((P.end - Date.now()) / 1000));
     const t = document.getElementById("ptime"); if (t) t.textContent = Math.floor(rem / 60) + ":" + String(rem % 60).padStart(2, "0");
     if (Date.now() < P.end) return;
-    if (!P.rest && P.i < r.items.length - 1) { P.rest = true; P.end = Date.now() + PAUSE * 1000; beep(false); }
-    else if (P.rest) { P.rest = false; P.i++; P.end = Date.now() + rItem(r.items[P.i]).sec * 1000; beep(true); }
+    if (!P.rest && P.i < r.items.length - 1 && rPause(r)) { P.rest = true; P.end = Date.now() + rPause(r) * 1000; beep(false); }
+    else if (P.rest || P.i < r.items.length - 1) { P.rest = false; P.i++; P.end = Date.now() + rItem(r.items[P.i]).sec * 1000; beep(true); }
     else { P.done = true; beep(true); }
     render();
   }
@@ -1396,15 +1399,16 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     if ("exaddsave" in el.dataset) { const inp = document.getElementById("exName"), v = inp && inp.value.trim(), g = state.group; if (!v) { inp && inp.focus(); return; }
       EXERCISES[g] = EXERCISES[g] || []; if (!EXERCISES[g].some(x => x.n === v)) { const x = { n: v, t: state.addExType }; EXERCISES[g].push(x); (state.userEx[g] = state.userEx[g] || []).push(x); }
       state.addEx = false; save(); render(); return; }
+    if ("rpausesave" in el.dataset) { const r = state.routines[state.rKind].find(x => x.id === state.rId), v = (document.getElementById("rPause") || {}).value; if (!r || v == null || String(v).trim() === "") return; r.pause = Math.max(0, Math.min(600, Math.round(num(v) || 0))); save(); render(); return; }
     if ("ritemadd" in el.dataset) { const inp = document.getElementById("rItem"), v = inp && inp.value.trim(), r = state.routines[state.rKind].find(x => x.id === state.rId); if (!v || !r) return; const sec = Math.max(1, Math.round(num((document.getElementById("rSec") || {}).value) || 60)); r.items.push({ n: v, sec }); save(); render(); const n = document.getElementById("rItem"); if (n) n.focus(); return; }
     if (el.dataset.ritemdel) { const r = state.routines[state.rKind].find(x => x.id === state.rId); if (r) { r.items.splice(+el.dataset.ritemdel, 1); save(); render(); } return; }
     if (el.dataset.wroutine) { const wo = state.wo, k = el.dataset.wrk; wo.rt = wo.rt || {}; wo.rt[k] = el.dataset.wroutine; wo.at = k; save(); render(); screen.scrollTop = 0; return; }
     if (el.dataset.pstart) { startPlay(el.dataset.pstart); render(); screen.scrollTop = 0; return; }
     if ("ppause" in el.dataset) { const P = state.play; if (P.left != null) { P.end = Date.now() + P.left * 1000; P.left = null; } else P.left = Math.max(0, Math.ceil((P.end - Date.now()) / 1000)); render(); return; }
-    // Überspringen: aus einer Übung in die 10-Sekunden-Pause (letzte Übung: fertig), aus der Pause direkt in die nächste Übung
+    // Überspringen: aus einer Übung in die Pause (letzte Übung: fertig), aus der Pause direkt in die nächste Übung
     if ("pskip" in el.dataset) { const P = state.play, r = playRoutine(); P.left = null;
-      if (P.rest) { P.rest = false; P.i++; P.end = Date.now() + rItem(r.items[P.i]).sec * 1000; }
-      else if (P.i < r.items.length - 1) { P.rest = true; P.end = Date.now() + PAUSE * 1000; }
+      if (P.rest || (P.i < r.items.length - 1 && !rPause(r))) { P.rest = false; P.i++; P.end = Date.now() + rItem(r.items[P.i]).sec * 1000; }
+      else if (P.i < r.items.length - 1) { P.rest = true; P.end = Date.now() + rPause(r) * 1000; }
       else P.done = true;
       beep(!P.rest); tickLoop(); render(); return; }
     if ("pstop" in el.dataset) { clearInterval(pTimer); state.play = null; render(); return; }

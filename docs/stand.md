@@ -111,3 +111,4 @@ Quelldatei: prototyp.html · Übungsdaten: uebungen.json (128 Übungen aus deine
 - v90 (15.10.): Überschriften von Split, Rahmen, Training auf gleicher Höhe wie „Hallo Nik“ (leere Datumszeile darüber); Profilbild richtet sich per JS an der Überschrift aus (im Verlauf tiefer, neben „Verlauf“).
 - v91 (15.10.): Routine-Player: Geschafft-Haken ohne schwarze Füllung, größer (140 px) und dicker; Button nur „Nächste Übung“ (ohne Pfeil).
 - v92 (15.10.): Nach „Übung abschließen“ direkt zurück zum Hauptteil. „Training abgeschlossen“ nicht mehr antippbar; darunter rötlich „Training zurücksetzen“ (zweimal tippen), erscheint nur bei abgeschlossenem Training; eingetragene Sätze bleiben gespeichert.
+- v93 (15.10.): Routinen (Rahmen): unter „Übung + Sek. + Plus“ neue Zeile „Pause + Sek. + ✓“. Pause pro Routine gespeichert (Feld `pause`, Standard 10 s), gilt im Player zwischen allen Übungen und in der Gesamtzeit; 0 = ohne Pause.
