@@ -163,7 +163,7 @@ button { font-family: inherit; }
 .restbox { background: var(--rest-soft); color: var(--fg); border-radius: 18px; padding: 18px; display: flex; flex-direction: column; gap: 8px; }
 
 /* Verlauf */
-.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stats { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 8px; }
 .stat { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; }
 .stat b { font-size: 1.4rem; font-family: var(--display); font-variant-numeric: tabular-nums; }
 .stat span { font-size: .74rem; color: var(--muted); }
@@ -458,7 +458,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     <p class="variant-note" id="variantNote"></p>
 
     <dl class="struct">
-      <div><dt>Heute</dt><dd>Dashboard: heutiges Training mit Dauer und Phasen, „Morgen“, „Nächster Rest Day“ und der Wochenstreifen.</dd></div>
+      <div><dt>Heute</dt><dd>Dashboard: heutiges Training mit seinen Phasen, „Morgen“, „Nächster Rest Day“ und der Wochenstreifen.</dd></div>
       <div><dt>Training</dt><dd>Immer drei Abschnitte: 1 Aufwärmen, 2 Hauptteil, 3 Cooldown. Die Übungen sind noch Platzhalter und kommen im Feintuning.</dd></div>
       <div><dt>Wochenplan</dt><dd>Öffnet sich über die Karte „Wochenplan“ auf Heute (kein eigener Tab mehr). Wochenübersicht mit allen Tagen, Rest Days gestrichelt. Mit den Pfeilen blätterst du zwischen den Wochen.</dd></div>
       <div><dt>Split</dt><dd>Auswahl deines Trainingssplits, zum Beispiel Kraftausdauer, Maximalkraft, Körpergewicht oder Gewichtstraining. Der aktive Split bestimmt den Wochenplan und das Dashboard.</dd></div>
@@ -710,7 +710,6 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
   const allSplits = () => SPLITS.map(s => state.userSplits[s.id] || s).concat(Object.values(state.userSplits).filter(u => !SPLITS.some(s => s.id === u.id)));
   const splitById = id => allSplits().find(s => s.id === id) || allSplits()[0];
   const trainCount = s => s.days.filter(d => d.type !== "rest").length;
-  const avgMin = s => { const t = s.days.filter(d => d.dur); if (!t.length) return 0; return Math.round(t.reduce((a, d) => a + d.dur[0] + d.dur[1] + d.dur[2], 0) / t.length); };
   const TYPE_LABEL = { run: "Ausdauer", strength: "Kraft", bike: "Ausdauer", skill: "Skills", rest: "Rest Day" };
   const PHASES = [
     { key: "w", name: "Aufwärmen", hint: "z. B. Einlaufen, Mobilisation" },
@@ -782,8 +781,8 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
   const checkSvg = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
   function phasebar(p) {
-    return '<div class="phasebar" aria-hidden="true">' + p.dur.map((m, i) => '<span class="' + PHASES[i].key + '" style="flex:' + m + '"></span>').join("") + "</div>" +
-      '<div class="phaselegend">' + p.dur.map((m, i) => '<span><i style="background:var(--' + ["warm", "main", "cool"][i] + ')"></i>' + PHASES[i].name + " " + m + "′</span>").join("") + "</div>";
+    return '<div class="phasebar" aria-hidden="true">' + PHASES.map(ph => '<span class="' + ph.key + '" style="flex:1"></span>').join("") + "</div>" +
+      '<div class="phaselegend">' + PHASES.map((ph, i) => '<span><i style="background:var(--' + ["warm", "main", "cool"][i] + ')"></i>' + ph.name + "</span>").join("") + "</div>";
   }
 
   function viewHome() {
@@ -796,12 +795,12 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     } else {
       const done = isDone(t.key);
       todayCard = '<button type="button" class="today t-' + t.type + '" data-open="' + t.key + '">' +
-        '<div class="row"><span class="chip">' + TYPE_LABEL[t.type] + "</span>" + (done ? '<span class="pill-done">✓ Erledigt</span>' : '<span class="label" style="color:inherit;opacity:.8">' + total(t) + " Min</span>") + "</div>" +
+        '<div class="row"><span class="chip">' + TYPE_LABEL[t.type] + "</span>" + (done ? '<span class="pill-done">✓ Erledigt</span>' : "") + "</div>" +
         "<div><h3>" + esc(t.title) + '</h3><div class="sub">' + esc(t.sub) + "</div></div>" + phasebar(t) +
         '<span class="cta">' + (done ? "Training ansehen" : "Training starten") + " →</span></button>";
     }
     const tmText = tm.type === "rest" ? "Rest Day" : tm.title;
-    const tmMeta = tm.type === "rest" ? "Erholung" : TYPE_LABEL[tm.type] + " · " + total(tm) + " Min";
+    const tmMeta = tm.type === "rest" ? "Erholung" : TYPE_LABEL[tm.type];
     const nrMeta = nr ? fmt(nr.date, { weekday: "long" }) + ", " + relDay(nr.date) : "";
     const nrText = nr ? (diffDays(nr.date) === 0 ? "Heute" : fmt(nr.date, { weekday: "long" })) : "–";
     const days = Array.from({ length: 7 }, (_, i) => plan(addDays(mon, i))).map(p =>
@@ -860,7 +859,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const rows = Array.from({ length: 7 }, (_, i) => plan(addDays(mon, i))).map(p => {
       const isT = p.key === iso(today);
       const past = diffDays(p.date) < 0;
-      let right = p.type === "rest" ? "frei" : total(p) + " Min";
+      let right = p.type === "rest" ? "frei" : "›";
       if (p.type !== "rest" && isDone(p.key)) right = '<span class="st-ok">✓ erledigt</span>';
       else if (p.type !== "rest" && past) right = '<span class="st-miss">offen</span>';
       return '<button type="button" class="prow t-' + p.type + (isT ? " is-today" : "") + (p.type === "rest" ? " rest" : "") + '" data-open="' + p.key + '">' +
@@ -869,9 +868,8 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
         '<span class="r">' + right + "</span></button>";
     }).join("");
     const trainings = Array.from({ length: 7 }, (_, i) => plan(addDays(mon, i))).filter(p => p.type !== "rest");
-    const mins = trainings.reduce((a, p) => a + total(p), 0);
     return '<button type="button" class="back" data-back>‹ Heute</button>' +
-      '<div class="top"><span class="date">' + trainings.length + " Trainings · " + Math.floor(mins / 60) + " h " + (mins % 60) + ' min</span><h2>Wochenplan</h2></div>' +
+      '<div class="top"><span class="date">' + trainings.length + (trainings.length === 1 ? " Training" : " Trainings") + '</span><h2>Wochenplan</h2></div>' +
       '<div class="weeknav"><button type="button" data-week="-1" aria-label="Vorherige Woche">‹</button><span>KW ' + weekNo(mon) + " · " + fmt(mon, { day: "numeric", month: "short" }) + " – " + fmt(sun, { day: "numeric", month: "short" }) + '</span><button type="button" data-week="1" aria-label="Nächste Woche">›</button></div>' +
       '<div class="plist">' + rows + "</div>";
   }
@@ -897,7 +895,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const label = first.toLocaleDateString("de-DE", { month: "long", year: "numeric" });
     return '<div class="top">' + histToggle() + '<h2>Verlauf</h2></div>' +
       '<div class="weeknav"><button type="button" data-hmonth="-1" aria-label="Vorheriger Monat">‹</button><span>' + label + '</span><button type="button" data-hmonth="1" aria-label="Nächster Monat"' + (state.monthOffset >= 0 ? " disabled" : "") + ">›</button></div>" +
-      '<div class="stats"><div class="stat"><b>' + doneN + "/" + planned + '</b><span>Trainings</span></div><div class="stat"><b>' + Math.floor(mins / 60) + ":" + String(mins % 60).padStart(2, "0") + '</b><span>Stunden</span></div><div class="stat"><b>' + (planned ? Math.round(doneN / planned * 100) : 0) + ' %</b><span>geschafft</span></div></div>' +
+      '<div class="stats"><div class="stat"><b>' + doneN + "/" + planned + '</b><span>Trainings</span></div><div class="stat"><b>' + (planned ? Math.round(doneN / planned * 100) : 0) + ' %</b><span>geschafft</span></div></div>' +
       '<div class="cal"><div class="cal-h">' + ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"].map(x => "<span>" + x + "</span>").join("") + '</div><div class="cal-g">' + cells.join("") + "</div></div>" +
       '<div class="legend"><span><i class="ok"></i>erledigt</span><span><i class="miss"></i>verpasst</span><span><i class="open"></i>offen</span><span><i class="lg-today"></i>heute</span></div>';
   }
@@ -906,15 +904,13 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const mon = addDays(mondayOf(today), state.histOffset * 7), sun = addDays(mon, 6);
     const days = Array.from({ length: 7 }, (_, i) => plan(addDays(mon, i))).filter(p => p.type !== "rest" && diffDays(p.date) <= 0);
     const done = days.filter(p => isDone(p.key));
-    const mins = done.reduce((a, p) => a + total(p), 0);
     let streak = 0; for (let i = 0; i < 60; i++) { const p = plan(addDays(today, -i)); if (p.type === "rest") continue; if (isDone(p.key)) streak++; else if (i > 0) break; }
     const status = p => isDone(p.key) ? '<span class="st-ok">✓ erledigt</span>' : diffDays(p.date) === 0 ? '<span class="st-open">heute offen</span>' : '<span class="st-miss">verpasst</span>';
-    const rows = days.slice().reverse().map(p => '<div class="hrow t-' + p.type + '"><div class="t"><strong>' + esc(p.title) + "</strong><small>" + fmt(p.date, { weekday: "short", day: "numeric", month: "short" }) + " · " + TYPE_LABEL[p.type] + " · " + total(p) + " Min</small></div>" + status(p) + "</div>").join("");
+    const rows = days.slice().reverse().map(p => '<div class="hrow t-' + p.type + '"><div class="t"><strong>' + esc(p.title) + "</strong><small>" + fmt(p.date, { weekday: "short", day: "numeric", month: "short" }) + " · " + TYPE_LABEL[p.type] + "</small></div>" + status(p) + "</div>").join("");
     return '<div class="top">' + histToggle() + '<h2>Verlauf</h2></div>' +
       '<div class="weeknav"><button type="button" data-hweek="-1" aria-label="Vorherige Woche">‹</button><span>KW ' + weekNo(mon) + " · " + fmt(mon, { day: "numeric", month: "short" }) + " – " + fmt(sun, { day: "numeric", month: "short" }) + '</span><button type="button" data-hweek="1" aria-label="Nächste Woche"' + (state.histOffset >= 0 ? " disabled" : "") + ">›</button></div>" +
       '<div class="stats">' +
       '<div class="stat"><b>' + done.length + "/" + days.length + '</b><span>Trainings</span></div>' +
-      '<div class="stat"><b>' + Math.floor(mins / 60) + ":" + String(mins % 60).padStart(2, "0") + '</b><span>Stunden</span></div>' +
       '<div class="stat"><b>' + streak + '</b><span>in Folge</span></div></div>' +
       (rows ? "<div>" + rows + "</div>" : '<div class="pr-empty">In dieser Woche stand bisher kein Training an.</div>');
   }
@@ -929,7 +925,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     }
     const s = secs(p.key), done = isDone(p.key);
     const running = woIs(p.key, state.split, wd(d));
-    return back + '<div class="dhead t-' + p.type + '"><span class="chip" style="align-self:flex-start">' + TYPE_LABEL[p.type] + " · " + total(p) + " Min</span><h2>" + esc(p.title) + '</h2><div class="sub">' + esc(p.sub) + " · " + dateLine + "</div>" + phasebar(p) + "</div>" +
+    return back + '<div class="dhead t-' + p.type + '"><span class="chip" style="align-self:flex-start">' + TYPE_LABEL[p.type] + "</span><h2>" + esc(p.title) + '</h2><div class="sub">' + esc(p.sub) + " · " + dateLine + "</div>" + phasebar(p) + "</div>" +
       phaseCards(p, state.split, wd(d), s, done ? iso(addDays(d, 1)) : p.key, p.key, p.key) +
       (done ? '<div class="cta finish is-done" aria-disabled="true">✓ Training abgeschlossen</div><button type="button" class="cta finish is-reset" data-wreset>Training zurücksetzen</button>'
         : '<button type="button" class="cta finish" data-start data-wkey="' + p.key + '" data-wsplit="' + state.split + '" data-wday="' + wd(d) + '">' + (running ? "Training fortsetzen" : "Training starten") + "</button>");
@@ -949,7 +945,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
       const inner = '<div class="exn"><strong>' + gName(g) + "</strong><small>" + (names.length ? names.map(esc).join(" · ") : c + (c === 1 ? " Übung" : " Übungen") + " frei wählbar") + "</small></div>";
       return '<li class="exrow blk">' + (tap ? '<button type="button" class="blkbtn" data-wopen="group:' + g + '" data-wkey="' + tapKey + '" data-wsplit="' + split + '" data-wday="' + day + '">' + inner + chev + "</button>" : inner) + "</li>"; }).join("") + "</ul>" : "";
     return PHASES.map((ph, i) =>
-      '<section class="phase ph-' + ph.key + (s && s[i] ? " done" : "") + '"><header><span class="n">' + (i + 1) + '</span><div class="hx"><h3>' + ph.name + '</h3><div class="hmeta">' + p.dur[i] + " Min · " + (i === 1 && B ? B.map(b => gName(b[0])).join(", ") : i === 1 && exs ? exs.length + (exs.length === 1 ? " Einheit" : " Übungen") : ph.hint) + "</div></div>" +
+      '<section class="phase ph-' + ph.key + (s && s[i] ? " done" : "") + '"><header><span class="n">' + (i + 1) + '</span><div class="hx"><h3>' + ph.name + '</h3><div class="hmeta">' + (i === 1 && B ? B.map(b => gName(b[0])).join(", ") : i === 1 && exs ? exs.length + (exs.length === 1 ? " Einheit" : " Übungen") : ph.hint) + "</div></div>" +
       (s ? '<button type="button" class="check" data-sec="' + i + '" aria-pressed="' + s[i] + '" aria-label="' + ph.name + ' abhaken">' + checkSvg + "</button>" : "") + "</header>" +
       (i === 1 && B ? blockList : i === 1 && exs ? '<ul class="exs">' + exs.map(n => { const l = lastInSplit(n, split, before);
         return '<li class="exrow"><div class="exn"><strong>' + esc(n) + "</strong></div>" +
@@ -965,7 +961,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
       const on = s.id === state.split;
       return '<button type="button" class="split' + (on ? " is-active" : "") + '" data-split-open="' + s.id + '">' +
         '<div class="row"><div><h3>' + s.name + "</h3><p>" + esc(s.focus || "Eigener Split") + "</p></div>" + (on ? '<span class="active-pill">Aktiv</span>' : "") + "</div>" +
-        '<div class="facts"><span class="fact">' + trainCount(s) + "× pro Woche</span><span class=\"fact\">Ø " + avgMin(s) + " Min</span></div>" + wbars(s) + "</button>";
+        '<div class="facts"><span class="fact">' + trainCount(s) + "× pro Woche</span></div>" + wbars(s) + "</button>";
     }).join("");
     return '<div class="top"><span class="date" aria-hidden="true">&nbsp;</span><h2>Dein Split</h2></div>' + cards +
       '<button type="button" class="split-new" data-dnew>+ Eigenen Split erstellen</button>';
@@ -975,9 +971,9 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const rows = s.days.map((d, i) => (d.type === "rest" ? '<div class="prow t-rest rest" style="cursor:default">' : '<button type="button" class="prow t-' + d.type + '" data-tpl="' + i + '">') +
       '<span class="d"><small>' + ["Mo", "Di", "Mi", "Do", "Fr", "Sa", "So"][i] + '</small></span>' +
       '<span class="t"><span class="chip">' + TYPE_LABEL[d.type] + "</span><strong>" + (d.type === "rest" ? "Erholung" : esc(d.title)) + "</strong></span>" +
-      '<span class="r">' + (d.type === "rest" ? "frei" : total(d) + " Min ›") + "</span>" + (d.type === "rest" ? "</div>" : "</button>")).join("");
+      '<span class="r">' + (d.type === "rest" ? "frei" : "›") + "</span>" + (d.type === "rest" ? "</div>" : "</button>")).join("");
     return '<button type="button" class="back" data-back>‹ Alle Splits</button>' +
-      '<div class="dhead"><div class="facts">' + (on ? '<span class="active-pill">Aktiv</span>' : "") + '<span class="fact">' + trainCount(s) + '× pro Woche</span><span class="fact">Ø ' + avgMin(s) + " Min</span></div><h2>" + esc(s.name) + "</h2></div>" + loadBox(s.id, s.id === "mk" ? "Bei kleinen Muskeln (seitliche und hintere Schulter, Bauch, Abduktoren) sind 5–8 Wiederholungen realistischer." : "") +
+      '<div class="dhead"><div class="facts">' + (on ? '<span class="active-pill">Aktiv</span>' : "") + '<span class="fact">' + trainCount(s) + '× pro Woche</span></div><h2>' + esc(s.name) + "</h2></div>" + loadBox(s.id, s.id === "mk" ? "Bei kleinen Muskeln (seitliche und hintere Schulter, Bauch, Abduktoren) sind 5–8 Wiederholungen realistischer." : "") +
       '<div><span class="label">Wochenablauf</span><div class="plist" style="margin-top:8px">' + rows + "</div></div>" +
       '<div class="btns">' + (on ? '<button type="button" class="cta finish is-done" disabled>✓ Das ist dein aktueller Split</button>' : '<button type="button" class="cta finish" data-split-activate="' + s.id + '">Diesen Split aktivieren</button>') +
       '<button type="button" class="cta ghost" data-dedit="' + s.id + '">Split bearbeiten</button></div>';
@@ -1038,7 +1034,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const s = splitById(state.splitDetail), p = s.days[state.tplDay], t = iso(today);
     const running = woIs(t, s.id, state.tplDay), doneT = state.done[pk(t, s.id, state.tplDay)];
     return '<button type="button" class="back" data-back>‹ ' + s.name + "</button>" +
-      '<div class="dhead t-' + p.type + '"><span class="chip" style="align-self:flex-start">' + TYPE_LABEL[p.type] + " · " + total(p) + " Min</span><h2>" + esc(p.title) + '</h2><div class="sub">' + s.name + " · jeden " + ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"][state.tplDay] + " · " + esc(p.sub) + "</div>" + phasebar(p) + "</div>" +
+      '<div class="dhead t-' + p.type + '"><span class="chip" style="align-self:flex-start">' + TYPE_LABEL[p.type] + "</span><h2>" + esc(p.title) + '</h2><div class="sub">' + s.name + " · jeden " + ["Montag", "Dienstag", "Mittwoch", "Donnerstag", "Freitag", "Samstag", "Sonntag"][state.tplDay] + " · " + esc(p.sub) + "</div>" + phasebar(p) + "</div>" +
       phaseCards(p, s.id, state.tplDay, null, iso(addDays(today, 1)), t, t) +
       '<button type="button" class="cta finish' + (doneT ? " is-done" : "") + '" data-start data-wkey="' + t + '" data-wsplit="' + s.id + '" data-wday="' + state.tplDay + '">' + (doneT ? "✓ Heute erledigt · Einträge ansehen" : running ? "Training fortsetzen" : "Training jetzt starten") + "</button>" +
       '<p class="hint-sm">Du kannst jedes Training jederzeit machen, auch wenn der Split nicht aktiv ist. Es wird mit dem heutigen Datum gespeichert.</p>';
@@ -1104,8 +1100,8 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const nav = (prevLbl, nextLbl, final) => '<div class="wnav">' + (step > 0 ? '<button type="button" class="cta ghost" data-wstep="-1">‹ ' + prevLbl + "</button>" : "") +
       '<button type="button" class="cta finish" ' + (final ? "data-wdone" : 'data-wstep="1"') + ">" + nextLbl + "</button></div>";
     if (step === 0 || step === last) {
-      const ph = PHASES[step === 0 ? 0 : 2], mins = p.dur[step === 0 ? 0 : 2];
-      return head + '<section class="wcard ph-' + ph.key + '"><span class="wtag">' + (step === 0 ? "Schritt 1" : "Letzter Schritt") + '</span><h2>' + ph.name + '</h2><div class="wmin">' + mins + " Min</div><p>" + ph.hint + ".</p></section>" +
+      const ph = PHASES[step === 0 ? 0 : 2];
+      return head + '<section class="wcard ph-' + ph.key + '"><span class="wtag">' + (step === 0 ? "Schritt 1" : "Letzter Schritt") + '</span><h2>' + ph.name + '</h2><p>' + ph.hint + ".</p></section>" +
         (step === 0 ? nav("", items.length ? "Aufwärmen erledigt · zur 1. Übung" : "Aufwärmen erledigt", false)
           : '<p class="hint-sm">Beim Abschließen werden deine eingetragenen Sätze gespeichert. Sie erscheinen dann unter „Letztes Mal“ und im Übungen-Tab bei „Zuletzt“ und „PR“.</p>' + nav("Letzte Übung", "Training abschließen", true));
     }
@@ -1125,7 +1121,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const head = (to, lbl) => (to ? '<button type="button" class="back" data-wgo="' + to + '">‹ ' + lbl + "</button>" : '<button type="button" class="back" data-back>‹ Training unterbrechen</button>') +
       '<div class="whead"><span class="label">' + splitById(wo.split).name + " · " + esc(p.title) + " · " + fmt(d, { weekday: "short", day: "numeric", month: "short" }) + " · " + doneN + " von " + keys.length + " Übungen</span>" + prog + "</div>";
     const btn = (attr, lbl, ghost) => '<button type="button" class="cta ' + (ghost ? "ghost" : "finish") + '" ' + attr + ">" + lbl + "</button>";
-    const phaseCard = (i, tag) => '<section class="wcard ph-' + PHASES[i].key + '"><span class="wtag">' + tag + "</span><h2>" + PHASES[i].name + '</h2><div class="wmin">' + p.dur[i] + " Min</div><p>" + PHASES[i].hint + ".</p></section>";
+    const phaseCard = (i, tag) => '<section class="wcard ph-' + PHASES[i].key + '"><span class="wtag">' + tag + "</span><h2>" + PHASES[i].name + '</h2><p>' + PHASES[i].hint + ".</p></section>";
     // Aufwärmen / Cooldown: Routine aus dem Rahmen wählen und abarbeiten
     if (scr === "rpick" || at === "warm" || at === "cool") {
       const k = scr === "rpick" ? parts[1] : at, i = k === "warm" ? 0 : 2, list = state.routines[k], cur = (wo.rt || {})[k];
@@ -1135,7 +1131,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
         (list.length ? '<div class="plist">' + list.map(x => '<button type="button" class="wpickrow' + (x.id === cur ? " is-on" : "") + '" data-wroutine="' + x.id + '" data-wrk="' + k + '"><span class="gx"><strong>' + (esc(x.name) || "Ohne Namen") + "</strong><small>" + rMeta(x) + "</small></span>" + chev + "</button>").join("") + "</div>"
           : '<div class="pr-empty">Du hast noch keine ' + PHASES[i].name + '-Routine. Lege sie im Tab „Rahmen“ an.</div>') +
         (k === "warm" ? '<div class="wnav">' + btn('data-wgo="hub"', "Ohne Routine zum Hauptteil", true) + "</div>" : '<div class="wnav">' + btn('data-wgo="hub"', "‹ Hauptteil", true) + btn("data-wdone", "Training abschließen") + "</div>");
-      const body = '<section class="wcard ph-' + PHASES[i].key + '"><span class="wtag">' + (k === "warm" ? "Schritt 1 · " : "Letzter Schritt · ") + PHASES[i].name + "</span><h2>" + (esc(r.name) || "Routine") + '</h2><div class="wmin">' + p.dur[i] + " Min</div>" +
+      const body = '<section class="wcard ph-' + PHASES[i].key + '"><span class="wtag">' + (k === "warm" ? "Schritt 1 · " : "Letzter Schritt · ") + PHASES[i].name + "</span><h2>" + (esc(r.name) || "Routine") + '</h2><div class="wmin">' + rMeta(r) + "</div>" +
         '<button type="button" class="linkbtn" data-wgo="rpick:' + k + '">Andere Routine wählen</button></section>' +
         (r.items.length ? btn('data-pstart="' + k + '"', "▶ Routine starten") + '<div class="ritems">' + r.items.map((x, n) => { x = rItem(x); return '<div class="ritem"><span class="rn">' + (n + 1) + "</span><span>" + esc(x.n) + '</span><span class="rdur">' + fmtDur(x.sec) + "</span></div>"; }).join("") + "</div>" : '<div class="pr-empty">Diese Routine hat noch keine Übungen.</div>');
       if (k === "warm") return head() + body + '<div class="wnav">' + btn("data-wphdone", "✓ Aufwärmen erledigt · zum Hauptteil") + "</div>";
@@ -1146,7 +1142,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const slotLine = (g, i) => { const sl = wo.slots[g + ":" + i];
       return '<span class="sl' + (sl && sl.done ? " ok" : "") + '"><i>' + (sl && sl.done ? checkSvg : i + 1) + "</i>" + (sl ? esc(sl.n) : "offen") + "</span>"; };
     if (at === "hub") return head() +
-      '<section class="wcard ph-m"><span class="wtag">Schritt 2</span><h2>Hauptteil</h2><div class="wmin">' + p.dur[1] + " Min · " + doneN + " von " + keys.length + ' Übungen erledigt</div><p>Wähle einen Bereich. Die Reihenfolge bestimmst du selbst und kannst jederzeit wechseln.</p></section>' +
+      '<section class="wcard ph-m"><span class="wtag">Schritt 2</span><h2>Hauptteil</h2><div class="wmin">' + doneN + " von " + keys.length + ' Übungen erledigt</div><p>Wähle einen Bereich. Die Reihenfolge bestimmst du selbst und kannst jederzeit wechseln.</p></section>' +
       '<div class="groups">' + B.map(([g, c]) => '<section class="group"><button type="button" class="group-head" data-wgo="group:' + g + '"><span class="gx"><strong>' + gName(g) + '</strong><span class="slots">' +
         Array.from({ length: c }, (_, i) => slotLine(g, i)).join("") + "</span></span>" + chev + "</button></section>").join("") + "</div>" +
       '<div class="wnav">' + btn('data-wgo="warm"', "‹ Aufwärmen", true) + btn('data-wgo="cool"', "Weiter zum Cooldown") + "</div>";
