@@ -427,9 +427,9 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 .phone { position: relative; }
 .tut { position: absolute; inset: 0; z-index: 20; }
 .tut.dim { background: rgba(0, 0, 0, .6); }
-.tut-hole { position: absolute; display: block; padding: 0; border: 0; background: transparent; border-radius: 18px; box-shadow: 0 0 0 2px var(--accent), 0 0 0 9999px rgba(0, 0, 0, .6); }
+.tut-hole { position: absolute; display: block; padding: 0; border: 0; background: transparent; box-shadow: 0 0 0 2.5px var(--accent), 0 0 0 9999px rgba(0, 0, 0, .6); }
 .tut-hole.tap { cursor: pointer; animation: tutPulse 1.4s ease-in-out infinite; }
-@keyframes tutPulse { 50% { box-shadow: 0 0 0 5px var(--accent), 0 0 0 9999px rgba(0, 0, 0, .6); } }
+@keyframes tutPulse { 50% { box-shadow: 0 0 0 4px var(--accent), 0 0 0 9999px rgba(0, 0, 0, .6); } }
 .tut-card { position: absolute; left: 14px; right: 14px; background: var(--bg); color: var(--fg); border: 1px solid var(--line); border-radius: 20px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 12px 40px rgba(0, 0, 0, .3); font-family: var(--body); }
 .tut-card p { margin: 0; font-size: 1rem; line-height: 1.4; }
 .tut-foot { display: flex; align-items: center; gap: 10px; }
@@ -1421,7 +1421,6 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
   const tutTrain = () => { for (let i = 0; i < 14; i++) { const p = plan(addDays(today, i)); if (p.type !== "rest") return p.key; } return iso(today); };
   const TV = (view, more) => () => { state.planBack = false; state.view = view; if (["home", "split", "rahmen", "exercises", "history"].includes(view)) state.tab = view; if (more) more(); };
   const tDetail = TV("detail", () => { state.tab = "home"; state.detail = tutTrain(); });
-  const tRout = k => TV("routines", () => { state.tab = "rahmen"; state.rKind = k; });
   const TUT = [
     [TV("home"), ".avatar-btn", "Willkommen! Tippe oben rechts auf dein Profil.", 1],
     [TV("profile"), ".field:has(#pName)", "Hier steht dein Vorname.", 0],
@@ -1431,12 +1430,9 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     [TV("profile"), ".acct", "Hier meldest du dich ab.", 0],
     [TV("profile"), ".back", "Tippe auf Zurück.", 1],
     [TV("home"), ".today", () => plan(today).type === "rest" ? "Heute ist Rest Day. Tippe trotzdem drauf, dann schauen wir uns dein nächstes Training an." : "Das ist dein Training für heute. Tippe drauf.", 1],
-    [tDetail, ".ph-w", "Jedes Training hat drei Teile. Tippe auf Aufwärmen.", 1],
-    [tDetail, ".ph-w ul", "Hier wählst du deine Aufwärm-Routine. Im Training läuft sie mit Timer.", 0],
-    [tDetail, ".ph-m", "Tippe auf den Hauptteil.", 1],
-    [tDetail, ".ph-m ul", "Hier wählst du pro Bereich deine Übungen und trägst deine Sätze ein.", 0],
-    [tDetail, ".ph-c", "Tippe auf Cooldown.", 1],
-    [tDetail, ".ph-c ul", "Hier wählst du deine Cooldown-Routine.", 0],
+    [tDetail, ".ph-w", "Hier siehst du das Aufwärmen. Hier wählst du deine Aufwärm-Routine, im Training läuft sie mit Timer.", 0],
+    [tDetail, ".ph-m", "Das ist der Hauptteil. Hier wählst du deine Übungen aus und trägst deine Sätze ein.", 0],
+    [tDetail, ".ph-c", "Und hier das Cooldown mit deiner Cooldown-Routine.", 0],
     [tDetail, ".cta.finish", "Hier startest du das Training. Am Ende schließt du es ab und es landet im Verlauf.", 0],
     [tDetail, ".back", "Tippe auf Zurück.", 1],
     [TV("home"), ".duo .mini:first-child", "Hier siehst du, was morgen dran ist.", 0],
@@ -1447,12 +1443,8 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     [TV("home"), '.tabbar [data-tab="split"]', "Tippe unten auf Split.", 1],
     [TV("split"), ".split-new", "Aktiviere einen fertigen Split, indem du ihn antippst, oder erstelle hier deinen eigenen.", 0],
     [TV("split"), '.tabbar [data-tab="rahmen"]', "Tippe unten auf Rahmen.", 1],
-    [TV("rahmen"), '[data-rkind="warm"]', "Tippe auf Aufwärmen.", 1],
-    [tRout("warm"), "[data-rnew]", "Hier erstellst du deine eigene Aufwärm-Routine mit Übungen und Sekunden.", 0],
-    [tRout("warm"), ".back", "Tippe auf Zurück.", 1],
-    [TV("rahmen"), '[data-rkind="cool"]', "Tippe auf Cooldown.", 1],
-    [tRout("cool"), "[data-rnew]", "Genauso legst du hier deine Cooldown-Routinen an.", 0],
-    [tRout("cool"), ".back", "Tippe auf Zurück.", 1],
+    [TV("rahmen"), '[data-rkind="warm"]', "Hier erstellst du deine Aufwärm-Routinen mit Übungen und Sekunden.", 0],
+    [TV("rahmen"), '[data-rkind="cool"]', "Und hier deine Cooldown-Routinen.", 0],
     [TV("rahmen"), '.tabbar [data-tab="exercises"]', "Tippe unten auf Training.", 1],
     [TV("exercises"), null, "Hier findest du alle Übungen für Kraft, Ausdauer und Skills. Überall kannst du eigene Übungen hinzufügen oder Vorschläge von anderen übernehmen.", 0],
     [TV("exercises"), '.tabbar [data-tab="history"]', "Tippe unten auf Verlauf.", 1],
@@ -1470,8 +1462,9 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
       // Ziel in den sichtbaren Bereich holen (nur scrollen, wenn es von oben nicht ganz zu sehen ist)
       if (screen.contains(el)) { const sr = screen.getBoundingClientRect(), er = el.getBoundingClientRect(), y = er.top - sr.top + screen.scrollTop;
         screen.scrollTop = y + er.height <= sr.height - 16 ? 0 : y - Math.max(16, (sr.height - er.height) / 2); }
-      const b = el.getBoundingClientRect(), pad = 6, x = b.left - P.left - phone.clientLeft - pad, y = b.top - P.top - phone.clientTop - pad, w = b.width + 2 * pad, h = b.height + 2 * pad;
-      const st = ' style="left:' + Math.max(2, x) + "px;top:" + y + "px;width:" + Math.min(w, W - 4 - Math.max(2, x)) + "px;height:" + h + 'px"';
+      // Markierung liegt genau auf dem Rand des Ziels (gleiche Größe, gleiche Rundung)
+      const b = el.getBoundingClientRect(), x = b.left - P.left - phone.clientLeft, y = b.top - P.top - phone.clientTop, w = b.width, h = b.height, rad = getComputedStyle(el).borderRadius;
+      const st = ' style="left:' + x + "px;top:" + y + "px;width:" + w + "px;height:" + h + "px;border-radius:" + (parseFloat(rad) ? rad : "12px") + '"';
       hole = tap ? '<button type="button" class="tut-hole tap" data-tuthit aria-label="Weiter"' + st + "></button>" : '<div class="tut-hole"' + st + "></div>";
       pos = y + h / 2 > H / 2 ? "bottom:" + Math.max(12, H - y + 12) + "px" : "top:" + Math.min(H - 180, y + h + 12) + "px";
     }
