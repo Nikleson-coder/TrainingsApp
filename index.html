@@ -427,12 +427,13 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 }
 
 /* ---------- Demo fürs Handy: App füllt den ganzen Bildschirm, kein Rahmen, keine Erklärung ---------- */
-html, body { margin: 0; height: 100%; overflow: hidden; background: var(--a-tabbg); }
+html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; background: var(--a-tabbg); }
 .page { display: block; max-width: none; padding: 0; margin: 0; }
 .intro, .statusbar { display: none !important; }
-.phone { position: fixed; top: 0; right: 0; bottom: 0; left: 0; width: 100%; max-width: none; height: auto; margin: 0; border: 0; border-radius: 0; box-shadow: none; padding-top: max(0px, calc(env(safe-area-inset-top, 0px) - 12px)); }
-.tabbar { padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)); }
+.phone { position: fixed; top: 0; right: 0; left: 0; width: 100%; max-width: none; height: 100dvh; margin: 0; border: 0; border-radius: 0; box-shadow: none; padding-top: max(0px, calc(env(safe-area-inset-top, 0px) - 12px)); }
+.tabbar { padding-top: 12px; padding-bottom: max(12px, calc(env(safe-area-inset-bottom, 0px) - 22px)); }
 .screen { padding-top: 0; }
+@media (display-mode: standalone) { .phone { height: 100vh; } }
 .screen { -webkit-overflow-scrolling: touch; }
 </style>
 
