@@ -425,7 +425,8 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 .hint-sm { font-size: .82rem; color: var(--muted); margin: 0; }
 /* Anmeldung und Registrierung */
 .phone.auth .tabbar { display: none; }
-.auth { display: flex; flex-direction: column; gap: 14px; padding-bottom: 28px; }
+.auth { display: flex; flex-direction: column; gap: 14px; margin: auto 0; padding: 12px 0 28px; }
+.auth-welcome { gap: 14px; }
 .auth .cta { width: 100%; }
 .auth .linkbtn { align-self: center; padding: 2px 0; }
 .auth-text { margin: 0; line-height: 1.5; }
@@ -1542,7 +1543,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     if (m === "newpass") return '<form class="auth" data-a-form="newpass">' + top("Passwort vergessen", "Neues Passwort") + msg +
       '<div class="fields">' + inp("aPass", "Neues Passwort", "password", "new-password", "mindestens 6 Zeichen") + "</div>" +
       '<button type="submit" class="cta">Passwort speichern</button><button type="button" class="linkbtn" data-a-go="login">Zur Anmeldung</button></form>';
-    return '<form class="auth" data-a-form="login">' + top("Willkommen bei Alpha-Sports", "Anmelden") + msg +
+    return '<form class="auth" data-a-form="login">' + '<div class="top auth-welcome"><h2>Willkommen bei<br>Alpha&#8209;Sports</h2><h2>Anmelden</h2></div>' + msg +
       '<div class="fields">' + inp("aMail", "E-Mail", "email", "email", "name@beispiel.de", A.email) + inp("aPass", "Passwort", "password", "current-password", "Passwort") + "</div>" +
       '<button type="submit" class="cta">Anmelden</button><button type="button" class="linkbtn" data-a-go="forgot">Passwort vergessen?</button>' +
       '<div class="auth-alt"><span class="hint-sm">Noch kein Konto?</span><button type="button" class="cta ghost" data-a-go="register">Konto erstellen</button></div></form>';
