@@ -822,7 +822,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
   const rTotal = r => r.items.reduce((a, x) => a + rItem(x).sec, 0) + Math.max(0, r.items.length - 1) * 10;
   const rMeta = r => r.items.length ? r.items.length + (r.items.length === 1 ? " Übung" : " Übungen") + " · " + fmtDur(rTotal(r)) : "Noch keine Übungen";
   function viewRahmen() {
-    return '<div class="top"><h2>Rahmen</h2></div>' +
+    return '<div class="top"><span class="date" aria-hidden="true">&nbsp;</span><h2>Rahmen</h2></div>' +
       '<div class="groups">' + Object.keys(R_KIND).map(k =>
         '<button type="button" class="mini rcard" data-rkind="' + k + '"><span class="rc-row"><strong>' + R_KIND[k][0] + '</strong><span class="wc-go">›</span></span><span class="meta">' + R_KIND[k][1] + " · " + rCount(state.routines[k].length) + "</span></button>").join("") + "</div>";
   }
@@ -961,7 +961,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
         '<div class="row"><div><h3>' + s.name + "</h3><p>" + esc(s.focus || "Eigener Split") + "</p></div>" + (on ? '<span class="active-pill">Aktiv</span>' : "") + "</div>" +
         '<div class="facts"><span class="fact">' + trainCount(s) + "× pro Woche</span><span class=\"fact\">Ø " + avgMin(s) + " Min</span></div>" + wbars(s) + "</button>";
     }).join("");
-    return '<div class="top"><h2>Dein Split</h2></div>' + cards +
+    return '<div class="top"><span class="date" aria-hidden="true">&nbsp;</span><h2>Dein Split</h2></div>' + cards +
       '<button type="button" class="split-new" data-dnew>+ Eigenen Split erstellen</button>';
   }
   function viewSplitDetail() {
@@ -1189,7 +1189,7 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
   const chev = '<svg class="chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></svg>';
   function viewExercises() {
     const total = MUSCLE_GROUPS.reduce((a, g) => a + g.muscles.length, 0);
-    return '<div class="top"><h2>Training</h2></div><span class="label">Kraft</span><div class="groups">' +
+    return '<div class="top"><span class="date" aria-hidden="true">&nbsp;</span><h2>Training</h2></div><span class="label">Kraft</span><div class="groups">' +
       MUSCLE_GROUPS.map(g => '<section class="group"><button type="button" class="group-head" data-group="' + g.id + '">' +
         '<span class="gx"><strong>' + g.name + "</strong><small>" + (g.direct ? "" : g.muscles.length + " Muskeln · ") + groupCount(g) + (groupCount(g) === 1 ? " Übung" : " Übungen") + "</small></span>" + chev + "</button></section>").join("") + "</div>" +
       '<span class="label">Ausdauer</span><div class="groups">' + CARDIO.map(c => '<section class="group"><button type="button" class="group-head" data-group="' + c.id + '">' +
@@ -1350,6 +1350,8 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     document.getElementById("variantNote").textContent = NOTES[state.mode];
     screen.innerHTML = state.view === "split-edit" && state.draft ? viewSplitEdit() : state.view === "day-edit" && state.draft ? viewDayEdit() : state.view === "workout" && state.wo ? viewWorkout() : state.view === "template" ? viewTemplate() : state.view === "detail" ? viewDetail() : state.view === "plan" ? viewPlan() : state.view === "history" ? viewHistory() : state.view === "rahmen" ? viewRahmen() : state.view === "routines" ? viewRoutines() : state.view === "routine" ? viewRoutine() : state.view === "split" ? viewSplits() : state.view === "split-detail" ? viewSplitDetail() : state.view === "exercises" ? viewExercises() : state.view === "group" ? viewGroup() : state.view === "muscle" ? viewMuscle() : state.view === "profile" ? viewProfile() : viewHome();
     if (["home", "split", "rahmen", "exercises", "history"].includes(state.view)) screen.insertAdjacentHTML("afterbegin", '<button type="button" class="avatar avatar-btn" data-profile aria-label="Profil öffnen">' + avatarInner() + "</button>");
+    // Profilbild immer auf Höhe der Überschrift (wie bei „Hallo Nik“), auch im Verlauf unter dem Umschalter
+    { const av = screen.querySelector(".avatar-btn"), h = screen.querySelector(".top h2"); if (av && h) av.style.top = Math.round(h.offsetTop - 12) + "px"; }
     document.querySelectorAll(".tabbar [data-tab]").forEach(b => { if (b.dataset.tab === state.tab) b.setAttribute("aria-current", "page"); else b.removeAttribute("aria-current"); });
   }
 

@@ -108,3 +108,4 @@ Quelldatei: prototyp.html · Übungsdaten: uebungen.json (128 Übungen aus deine
 - v87 (15.10.): Dunkle Fläche unter der Leiste (iOS-Home-Bildschirm-App zu kurz): App im Standalone-Modus 100vh hoch, Hintergrund = Leistenfarbe; Tab-Leiste oben/unten gleicher Abstand (12 px).
 - v88 (15.10.): Service Worker holt Dateien mit cache: no-cache, damit neue Versionen sofort ankommen (GitHub Pages cached sonst bis 10 Min.).
 - v89 (15.10.): Tab-Leiste höher über dem iPhone-Home-Strich (oben/unten je Safe-Area − 16 px, ca. 18 px), oben wieder etwas mehr Abstand (Safe-Area − 2 px).
+- v90 (15.10.): Überschriften von Split, Rahmen, Training auf gleicher Höhe wie „Hallo Nik“ (leere Datumszeile darüber); Profilbild richtet sich per JS an der Überschrift aus (im Verlauf tiefer, neben „Verlauf“).
