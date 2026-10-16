@@ -514,7 +514,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 
 <script>
 (function () {
-// Übungsfigur in 3D: realistischer Körper (MakeHuman-Modell, CC0) ohne Gesicht, Muskeln mit Linien getrennt, trainierte rot. Braucht THREE (r128) und figur.bin.
+// Übungsfigur in 3D: runde, gesichtslose Figur aus Muskel-Formen; trainierte Muskeln rot. Braucht THREE (r128).
 (function () {
   let T = null, SPH = null; const D2R = Math.PI / 180;
   const COL = { body: 0x2E3033, muscle: 0xB2B4B8, red: 0xD9443A, prop: 0x5B6268, propLight: 0x8A9198 };
@@ -522,16 +522,16 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   // p Oberkörper nach vorn, sp/ch Wirbelsäule, sf Schulter nach vorn heben, sa seitlich heben, e Ellbogen, hf Hüfte beugen, k Knie, s Schultern hochziehen (m)
   // L/R am Ende gilt nur für eine Seite. anchor: feet = Füße bleiben am Boden, hands = Hände bleiben an der Stange, hip = Becken fest
   const MOVES = {
-    shrug: { anchor: "feet", cam: [200, 8, 3.3], A: { sf: 8, sa: 8, s: 0 }, B: { s: .055 }, grip: 1 },
+    shrug: { palm: [0, 0, -1], anchor: "feet", cam: [200, 8, 3.3], A: { sf: 8, sa: 8, s: 0 }, B: { s: .055 }, grip: 1 },
     carry: { anchor: "feet", cam: [205, 8, 3.4], A: { sa: 9, hfL: 20, kL: 10, hfR: -12, kR: 22, sp: 2 }, B: { hfL: -12, kL: 22, hfR: 20, kR: 10 }, grip: 1 },
-    bentRow: { anchor: "feet", cam: [215, 14, 3.3], A: { p: 50, hf: 62, k: 24, sf: 50, sa: 12, e: 0 }, B: { sf: -18, e: 95, sa: 22 }, grip: 1 },
+    bentRow: { palm: [0, 0, -1], anchor: "feet", cam: [215, 14, 3.3], A: { p: 50, hf: 62, k: 24, sf: 50, sa: 12, e: 0 }, B: { sf: -18, e: 95, sa: 22 }, grip: 1 },
     oneArmRow: { anchor: "feet", cam: [220, 14, 3.4], props: ["benchRow"], A: { p: 72, hf: 78, k: 20, hfR: 70, kR: 30, sfL: 62, eL: 10, saL: -4, sfR: 72, eR: 0, saR: 6 }, B: { sfR: -15, eR: 100, saR: 12 }, grip: 1 },
-    seatRow: { anchor: "hip", hip: [0, .55, 0], cam: [218, 12, 3.4], props: ["seat", "cableFront"], A: { p: 12, hf: 80, k: 30, sf: 88, e: 0, sa: 6 }, B: { p: -6, hf: 98, sf: -22, e: 105, sa: 14 }, grip: 1 },
-    pullup: { anchor: "hands", hands: [0, 2.25, 0], cam: [198, -4, 3.9], props: ["pullbar"], A: { sa: 158, sf: 14, e: 8, hf: 12, k: 35 }, B: { sa: 52, sf: 22, e: 118, hf: 18, k: 38, p: -6 }, grip: 1 },
-    pullupNarrow: { anchor: "hands", hands: [0, 2.25, 0], cam: [205, -4, 3.9], props: ["pullbar"], A: { sa: 172, sf: 20, e: 6, hf: 12, k: 35 }, B: { sa: 24, sf: 48, e: 132, hf: 18, k: 38, p: -6 }, grip: 1 },
-    pulldown: { anchor: "hip", hip: [0, .55, 0], cam: [200, 6, 3.6], props: ["seat", "cableTop"], A: { p: -6, hf: 88, k: 85, sa: 158, sf: 14, e: 8 }, B: { p: -14, sa: 52, sf: 24, e: 118 }, grip: 1 },
-    inverted: { anchor: "hands", hands: [0, 1.05, -.05], cam: [235, 16, 3.8], props: ["lowbar"], A: { p: -74, sf: 106, sa: 18, e: 0 }, B: { p: -62, sf: 20, sa: 30, e: 105 }, grip: 1 },
-    pullover: { anchor: "feet", cam: [235, 10, 3.6], props: ["cableHigh"], A: { p: 28, hf: 32, k: 14, sf: 160, sa: 10, e: 14 }, B: { sf: 18, e: 8 }, grip: 1 },
+    seatRow: { palm: [0, -1, 0], anchor: "hip", hip: [0, .55, 0], cam: [218, 12, 3.4], props: ["seat", "cableFront"], A: { p: 12, hf: 80, k: 30, sf: 88, e: 0, sa: 6 }, B: { p: -6, hf: 98, sf: -22, e: 105, sa: 14 }, grip: 1 },
+    pullup: { palm: [0, 0, 1], anchor: "hands", hands: [0, 2.25, 0], cam: [198, -4, 3.9], props: ["pullbar"], A: { sa: 158, sf: 14, e: 8, hf: 12, k: 35 }, B: { sa: 52, sf: 22, e: 118, hf: 18, k: 38, p: -6 }, grip: 1 },
+    pullupNarrow: { palm: [0, 0, -1], anchor: "hands", hands: [0, 2.25, 0], cam: [205, -4, 3.9], props: ["pullbar"], A: { sa: 172, sf: 20, e: 6, hf: 12, k: 35 }, B: { sa: 24, sf: 48, e: 132, hf: 18, k: 38, p: -6 }, grip: 1 },
+    pulldown: { palm: [0, 0, 1], anchor: "hip", hip: [0, .55, 0], cam: [200, 6, 3.6], props: ["seat", "cableTop"], A: { p: -6, hf: 88, k: 85, sa: 158, sf: 14, e: 8 }, B: { p: -14, sa: 52, sf: 24, e: 118 }, grip: 1 },
+    inverted: { palm: [0, 0, 1], anchor: "hands", hands: [0, 1.05, -.05], cam: [235, 16, 3.8], props: ["lowbar"], A: { p: -74, sf: 106, sa: 18, e: 0 }, B: { p: -62, sf: 20, sa: 30, e: 105 }, grip: 1 },
+    pullover: { palm: [0, -.3, 1], anchor: "feet", cam: [235, 10, 3.6], props: ["cableHigh"], A: { p: 28, hf: 32, k: 14, sf: 160, sa: 10, e: 14 }, B: { sf: 18, e: 8 }, grip: 1 },
     hyper: { anchor: "hip", hip: [0, 1.0, 0], cam: [228, 10, 3.6], props: ["hyperBench"], A: { p: 128, hf: 83, sf: 40, sa: -6, e: 135, sp: 6 }, B: { p: 44, hf: 0, sp: -6 } }
   };
   const MAP = [
@@ -598,7 +598,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     g.putImageData(im, 0, 0);
     const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 8; t.flipY = false; return skinCache[key] = t;
   }
-  let GRIP = .09, SOLE = .098;
+  let GRIP = .09, SOLE = .098; const PALM = 1, GRIPOFF = .031, GRIPFW = .014, BAR = .016, FTH = .009;
   function build(sp) {
     const M = MODEL, V = (k) => new T.Vector3().fromArray(M.j[k]), down = new T.Vector3(0, -1, 0);
     // Gedachte Gelenkkette mit geraden Gliedern (wie bisher): Arme/Beine hängen in Ruhe gerade nach unten
@@ -628,7 +628,57 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const mesh = new T.SkinnedMesh(geo, new T.MeshStandardMaterial({ map: skinTex(sp.muscles), roughness: .62, metalness: 0, skinning: true }));
     mesh.castShadow = true; mesh.frustumCulled = false; mesh.bind(skel, new T.Matrix4());
     const rot = {}; M.bones.forEach(k => rot[k] = new T.Matrix4().makeRotationFromQuaternion(S[k] || new T.Quaternion()));
-    J.sync = () => M.bones.forEach((k, i) => { const src = k.startsWith("fg") ? J["fgj" + k.slice(2)] : J[k]; bones[i].matrixWorld.multiplyMatrices(src.matrixWorld, rot[k]); });
+    // Finger: legen sich beim Greifen eng um die Stange (Winkel einmal ausgerechnet)
+    const FG = {}, bi = {}; M.bones.forEach((k, i) => bi[k] = i);
+    const rotAt = (m, c, ax, th) => { const t = new T.Matrix4().makeTranslation(c.x, c.y, c.z).multiply(new T.Matrix4().makeRotationAxis(ax, th)).multiply(new T.Matrix4().makeTranslation(-c.x, -c.y, -c.z)); return t.multiply(m); };
+    ["L", "R"].forEach(s => {
+      const sd = s === "L" ? 1 : -1, wr = V("wr" + s), k2 = V("f21" + s), k5 = V("f51" + s);
+      const across = k5.clone().sub(k2), fwd = k2.clone().add(k5).multiplyScalar(.5).sub(wr);
+      const pn = new T.Vector3().crossVectors(fwd, across).normalize().multiplyScalar(PALM * sd);
+      const fw = fwd.clone().addScaledVector(pn, -fwd.dot(pn)).normalize(), ax = new T.Vector3().crossVectors(fw, pn).normalize();
+      let kn = new T.Vector3(); for (let k = 2; k <= 5; k++) kn.add(V("f" + k + "1" + s)); kn.multiplyScalar(1 / 4);
+      const gp = kn.clone().addScaledVector(pn, GRIPOFF).addScaledVector(fw, GRIPFW), R = BAR + FTH;
+      const d2 = p => { const v = p.clone().sub(gp); return Math.hypot(v.dot(fw), v.dot(pn)); };
+      const ch = [];
+      for (let k = 1; k <= 5; k++) {
+        const h = [1, 2, 3, 4].map(j => V("f" + k + j + s)), steps = [];
+        if (k === 1) { let m = new T.Matrix4();
+          // Daumen legt sich von der anderen Seite um die Stange
+          for (let j = 0; j < 3; j++) {
+            const c = h[j].clone().applyMatrix4(m), e = h[j + 1].clone().applyMatrix4(m), d = e.clone().sub(c);
+            const to = gp.clone().sub(c); to.addScaledVector(ax, -to.dot(ax)); const tax = new T.Vector3().crossVectors(d, to).normalize();
+            let best = 0, bd = 1e9;
+            for (let th = 0; th <= 1.4; th += .01) { const q = d.clone().applyAxisAngle(tax, th).add(c), dd = d2(q); if (dd <= R) { best = th; break; } if (dd < bd) { bd = dd; best = th; } }
+            steps.push({ j, c: h[j], ax: tax, th: best }); m = rotAt(m, c, tax, best);
+          } }
+        else {
+          // erst die Finger zusammenlegen, dann um die Stange beugen
+          const d = h[1].clone().sub(h[0]); d.addScaledVector(pn, -d.dot(pn)).normalize();
+          const al = Math.atan2(new T.Vector3().crossVectors(d, fw).dot(pn), d.dot(fw)) * .85;
+          let m = rotAt(new T.Matrix4(), h[0], pn, al); steps.push({ j: 0, c: h[0], ax: pn, th: al });
+          for (let j = 0; j < 3; j++) {
+            const c = h[j].clone().applyMatrix4(m), e = h[j + 1].clone().applyMatrix4(m); let best = 0, bd = 1e9;
+            for (let th = 0; th <= 1.75; th += .01) { const q = e.clone().sub(c).applyAxisAngle(ax, th).add(c), dd = d2(q); if (dd <= R) { best = th; bd = -1; break; } if (dd < bd) { bd = dd; best = th; } }
+            steps.push({ j, c: h[j], ax, th: best }); m = rotAt(m, c, ax, best);
+          }
+        }
+        ch.push({ h, steps, bones: [1, 2, 3].map(j => bi["f" + k + j + s]) });
+      }
+      const q = S["wr" + s];
+      FG[s] = { wr, ch, gp: gp.clone().sub(wr).applyQuaternion(q), dir: ax.clone().applyQuaternion(q), pn: pn.clone().applyQuaternion(q) };
+    });
+    J.FG = FG; J.grip = { L: .15, R: .15 };
+    const tA = new T.Matrix4(), tM = new T.Matrix4(), tT = new T.Matrix4(), cv = new T.Vector3();
+    J.sync = () => {
+      M.bones.forEach((k, i) => { if (/^f\d\d/.test(k)) return; const src = k.startsWith("fg") ? J["fgj" + k.slice(2)] : J[k]; bones[i].matrixWorld.multiplyMatrices(src.matrixWorld, rot[k]); });
+      ["L", "R"].forEach(s => { const F = FG[s], g = J.grip[s];
+        tA.copy(bones[bi["wr" + s]].matrixWorld).multiply(tT.makeTranslation(-F.wr.x, -F.wr.y, -F.wr.z));
+        F.ch.forEach(c => { tM.identity(); let si = 0;
+          for (let j = 0; j < 3; j++) {
+            while (si < c.steps.length && c.steps[si].j === j) { const st = c.steps[si++]; cv.copy(st.c).applyMatrix4(tM); tM.copy(rotAt(tM.clone(), cv, st.ax, st.th * (g * .92 + .08))); }
+            bones[c.bones[j]].matrixWorld.multiplyMatrices(tA, tM).multiply(tT.makeTranslation(c.h[j].x, c.h[j].y, c.h[j].z));
+          } }); });
+    };
     J.skins = [mesh];
     return J;
   }
@@ -639,8 +689,8 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const cyl = (r, l, m) => { const c = new T.Mesh(new T.CylinderGeometry(r, r, l, 24), m || mP); c.castShadow = true; return c; };
     const P = { dyn: [] };
     (mv.props || []).forEach(k => {
-      if (k === "pullbar") { const c = cyl(.018, 1.6); c.rotation.z = Math.PI / 2; c.position.set(0, mv.hands[1] + .005, mv.hands[2]); scene.add(c); [-1, 1].forEach(sd => box(.06, mv.hands[1] + .05, .06, sd * .8, (mv.hands[1] + .05) / 2, mv.hands[2], mP)); }
-      if (k === "lowbar") { const c = cyl(.018, 1.5); c.rotation.z = Math.PI / 2; c.position.set(0, mv.hands[1] + .005, mv.hands[2]); scene.add(c); [-1, 1].forEach(sd => box(.06, mv.hands[1], .06, sd * .75, mv.hands[1] / 2, mv.hands[2], mP)); }
+      if (k === "pullbar") { const c = cyl(BAR, 1.6); c.rotation.z = Math.PI / 2; c.position.set(0, mv.hands[1], mv.hands[2]); scene.add(c); [-1, 1].forEach(sd => box(.06, mv.hands[1] + .05, .06, sd * .8, (mv.hands[1] + .05) / 2, mv.hands[2], mP)); }
+      if (k === "lowbar") { const c = cyl(BAR, 1.5); c.rotation.z = Math.PI / 2; c.position.set(0, mv.hands[1], mv.hands[2]); scene.add(c); [-1, 1].forEach(sd => box(.06, mv.hands[1], .06, sd * .75, mv.hands[1] / 2, mv.hands[2], mP)); }
       if (k === "seat") box(.42, .08, .42, 0, mv.hip[1] - .13, -.02);
       if (k === "benchRow") box(.4, .08, 1.1, .32, .5, .15);
       if (k === "hyperBench") { const pad = box(.36, .07, .3, 0, mv.hip[1] - .08, .06); pad.rotation.x = -.75; box(.06, mv.hip[1] - .1, .06, 0, (mv.hip[1] - .1) / 2, .02, mP); }
@@ -651,10 +701,10 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
         scene.add(line); P.dyn.push(() => { const a = new T.Vector3(); J.wrL.localToWorld(a.set(0, -.06, 0)); const b = new T.Vector3(); J.wrR.localToWorld(b.set(0, -.06, 0)); a.add(b).multiplyScalar(.5); g.setFromPoints([a, tgt]); });
       }
     });
-    if (sp.item === "bb") { const g = new T.Group(); const bar = cyl(.014, 1.7); bar.rotation.z = Math.PI / 2; g.add(bar); [-1, 1].forEach(sd => { const pl = cyl(.2, .05); pl.rotation.z = Math.PI / 2; pl.position.x = sd * .62; g.add(pl); }); scene.add(g);
-      P.dyn.push(() => { const a = new T.Vector3(), b = new T.Vector3(); J.wrL.localToWorld(a.set(0, -GRIP, .005)); J.wrR.localToWorld(b.set(0, -GRIP, .005)); g.position.copy(a).add(b).multiplyScalar(.5); g.rotation.y = 0; g.rotation.z = Math.atan2(a.y - b.y, a.x - b.x); }); }
-    if (sp.item === "db") ["L", "R"].forEach(s => { if (sp.move === "oneArmRow" && s === "L") return; const g = new T.Group(); const h = cyl(.014, .2); g.add(h); [-1, 1].forEach(sd => { const pl = cyl(.055, .05); pl.position.y = sd * .09; g.add(pl); }); g.position.set(0, -GRIP, .005); g.rotation.z = Math.PI / 2; J["wr" + s].add(g); });
-    if (sp.item === "handle") ["L", "R"].forEach(s => { const h = cyl(.014, .12); h.position.set(0, -GRIP, .005); h.rotation.z = Math.PI / 2; J["wr" + s].add(h); });
+    if (sp.item === "bb") { const g = new T.Group(); const bar = cyl(BAR, 1.7); bar.rotation.z = Math.PI / 2; g.add(bar); [-1, 1].forEach(sd => { const pl = cyl(.2, .05); pl.rotation.z = Math.PI / 2; pl.position.x = sd * .62; g.add(pl); }); scene.add(g);
+      P.dyn.push(() => { const a = new T.Vector3(), b = new T.Vector3(); J.wrL.localToWorld(a.copy(J.FG.L.gp)); J.wrR.localToWorld(b.copy(J.FG.R.gp)); g.position.copy(a).add(b).multiplyScalar(.5); g.rotation.y = 0; g.rotation.z = Math.atan2(a.y - b.y, a.x - b.x); }); }
+    if (sp.item === "db") ["L", "R"].forEach(s => { if (sp.move === "oneArmRow" && s === "L") return; const g = new T.Group(); const h = cyl(BAR, .2); g.add(h); [-1, 1].forEach(sd => { const pl = cyl(.055, .05); pl.position.y = sd * .09; g.add(pl); }); g.position.copy(J.FG[s].gp); g.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), J.FG[s].dir); J["wr" + s].add(g); });
+    if (sp.item === "handle") ["L", "R"].forEach(s => { const h = cyl(BAR, .12); h.position.copy(J.FG[s].gp); h.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), J.FG[s].dir); J["wr" + s].add(h); });
     return P;
   }
 
@@ -672,13 +722,19 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       J["an" + s].rotation.x = ((q.p || 0) - g("hf", s) + g("k", s)) * -D2R + (mv.anchor === "hip" && mv.props && mv.props.includes("hyperBench") ? 0 : 0);
       J["fg" + s].forEach(f => f.rotation.x = mv.grip ? -1.35 : -.15); J["th" + s].rotation.x = mv.grip ? -.6 : 0;
     });
+    // Unterarm drehen, damit die Handfläche zur Stange passt (Obergriff/Untergriff)
+    if (mv.palm) { J.root.updateMatrixWorld(true); ["L", "R"].forEach(s => {
+      const el = J["el" + s], wr = J["wr" + s]; el.rotation.y = 0; wr.rotation.y = 0; el.updateMatrixWorld(true);
+      const h = new T.Vector3().fromArray(mv.palm).applyQuaternion(wr.getWorldQuaternion(new T.Quaternion()).invert()), p = J.FG[s].pn;
+      let a = Math.atan2(p.z, p.x) - Math.atan2(h.z, h.x); a = Math.atan2(Math.sin(a), Math.cos(a));
+      el.rotation.y = a * .5; wr.rotation.y = a * .5; }); }
   }
   const wp = (o, x, y, z) => o.localToWorld(new T.Vector3(x, y, z));
   function anchor(J, mv) {
     J.root.position.set(0, 1, 0); J.root.updateMatrixWorld(true);
     if (mv.anchor === "hip") { J.root.position.set(mv.hip[0], mv.hip[1], mv.hip[2]); return; }
     let p, tgt;
-    if (mv.anchor === "hands") { p = wp(J.wrL, 0, -GRIP, 0).add(wp(J.wrR, 0, -GRIP, 0)).multiplyScalar(.5); tgt = new T.Vector3(mv.hands[0], mv.hands[1], mv.hands[2]); }
+    if (mv.anchor === "hands") { p = J.wrL.localToWorld(J.FG.L.gp.clone()).add(J.wrR.localToWorld(J.FG.R.gp.clone())).multiplyScalar(.5); tgt = new T.Vector3(mv.hands[0], mv.hands[1], mv.hands[2]); }
     else { const a = wp(J.anL, 0, -SOLE, .05), b = wp(J.anR, 0, -SOLE, .05); p = new T.Vector3((a.x + b.x) / 2, Math.min(a.y, b.y), (a.z + b.z) / 2); tgt = new T.Vector3(0, 0, 0); }
     J.root.position.add(tgt.sub(p));
   }
@@ -703,8 +759,9 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const frame = t => { if (stop) return; if (!canvas.isConnected) { dispose(); return; }
       const ph = opts && opts.phase != null ? opts.phase : (t % 2800) / 2800, e = (1 - Math.cos(ph * Math.PI * 2)) / 2, q = {};
       Object.keys(Object.assign({}, mv.A, mv.B)).forEach(k => { const a = mv.A[k] != null ? mv.A[k] : 0, b = mv.B[k] != null ? mv.B[k] : a; q[k] = a + (b - a) * e; });
-      pose(J, mv, q); anchor(J, mv); scene.updateMatrixWorld(true); J.sync(); J.tint(.8 + .2 * e); P.dyn.forEach(f => f());
-      if (!look) { const bb = new T.Box3(); J.root.traverse(o => bb.expandByPoint(o.getWorldPosition(new T.Vector3()))); bb.expandByPoint(wp(J.neck, 0, .26, 0)); bb.expandByScalar(.1); sz = bb.getSize(new T.Vector3()); look = bb.getCenter(new T.Vector3()); if (opts && opts.lookY) look.y += opts.lookY; fit = Math.max(sz.y, sz.x * .85, sz.z * .85, 1.2) * 2.3 * (dist / 3.5); }
+      J.grip.L = mv.gripL != null ? mv.gripL : mv.grip ? 1 : .15; J.grip.R = mv.gripR != null ? mv.gripR : mv.grip ? 1 : .15; pose(J, mv, q); anchor(J, mv); scene.updateMatrixWorld(true); J.sync(); J.tint(.8 + .2 * e); P.dyn.forEach(f => f());
+      if (!look) { const bb = new T.Box3(); J.root.traverse(o => bb.expandByPoint(o.getWorldPosition(new T.Vector3()))); bb.expandByPoint(wp(J.neck, 0, .26, 0)); bb.expandByScalar(.1); sz = bb.getSize(new T.Vector3()); look = bb.getCenter(new T.Vector3()); if (opts && opts.lookY) look.y += opts.lookY; if (opts && opts.lookX) look.x += opts.lookX; fit = Math.max(sz.y, sz.x * .85, sz.z * .85, 1.2) * 2.3 * (dist / 3.5); }
+      if (opts && opts.focus) { look = J["wr" + opts.focus].localToWorld(J.FG[opts.focus].gp.clone()); fit = dist; }
       cam.position.set(look.x + Math.sin(yaw * D2R) * Math.cos(pitch * D2R) * fit, look.y + Math.sin(pitch * D2R) * fit, look.z + Math.cos(yaw * D2R) * Math.cos(pitch * D2R) * fit); cam.lookAt(look);
       size(); r.render(scene, cam); if (!opts || opts.phase == null) requestAnimationFrame(frame); };
     function dispose() { stop = true; r.dispose(); }
