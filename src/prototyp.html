@@ -517,7 +517,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 // Übungsfigur in 3D: runde, gesichtslose Figur aus Muskel-Formen; trainierte Muskeln rot. Braucht THREE (r128).
 (function () {
   let T = null, SPH = null; const D2R = Math.PI / 180;
-  const COL = { body: 0xC7CCCF, muscle: 0xD3D8DA, red: 0xD9443A, prop: 0x5B6268, propLight: 0x8A9198 };
+  const COL = { body: 0x2E3033, muscle: 0xB2B4B8, red: 0xD9443A, prop: 0x5B6268, propLight: 0x8A9198 };
   // Bewegungen: Gelenkwinkel in Grad für Stellung A und B (die Figur pendelt dazwischen)
   // p Oberkörper nach vorn, sp/ch Wirbelsäule, sf Schulter nach vorn heben, sa seitlich heben, e Ellbogen, hf Hüfte beugen, k Knie, s Schultern hochziehen (m)
   // L/R am Ende gilt nur für eine Seite. anchor: feet = Füße bleiben am Boden, hands = Hände bleiben an der Stange, hip = Becken fest
@@ -553,70 +553,86 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   function ell(parent, rx, ry, rz, x, y, z, mat, rot) { const m = new T.Mesh(SPH, mat); m.scale.set(rx, ry, rz); m.position.set(x, y, z); if (rot) m.rotation.set(rot[0] || 0, rot[1] || 0, rot[2] || 0); m.castShadow = true; parent.add(m); return m; }
   // Glied als runde, sich verjüngende Form (Drehkörper) von 0 bis -len
   function limb(parent, len, r0, r1, bulge, mat) {
-    const pts = [], n = 16; pts.push(new T.Vector2(0, 0 + r0 * .9));
+    const pts = [], n = 24; pts.push(new T.Vector2(0, 0 + r0 * .9));
     for (let i = 0; i <= n; i++) { const t = i / n; pts.push(new T.Vector2(r0 + (r1 - r0) * t + bulge * Math.sin(Math.PI * t), -len * t)); }
     pts.push(new T.Vector2(0, -len - r1 * .9));
-    const m = new T.Mesh(new T.LatheGeometry(pts, 32), mat); m.castShadow = true; parent.add(m); return m;
+    const m = new T.Mesh(new T.LatheGeometry(pts.reverse(), 48), mat); m.castShadow = true; parent.add(m); return m;
   }
+  // Rumpfteil: Drehkörper mit Profil [[y, Radius], …] von oben nach unten, vorne/hinten abgeflacht
+  function trunk(parent, prof, sz, mat) {
+    const pts = [new T.Vector2(0, prof[0][0])]; prof.forEach(([y, r]) => pts.push(new T.Vector2(r, y))); pts.push(new T.Vector2(0, prof[prof.length - 1][0]));
+    const m = new T.Mesh(new T.LatheGeometry(pts.reverse(), 64), mat); m.scale.z = sz; m.castShadow = true; parent.add(m); return m;
+  }
+  const smooth = (top, bot, rs) => rs.map((r, i) => [top + (bot - top) * i / (rs.length - 1), r]);
   const piv = (parent, x, y, z) => { const o = new T.Object3D(); o.position.set(x, y, z); parent.add(o); return o; };
 
+  // Muskelflächen als Textur: dunkler Grund, helle Flächen mit Fugen (Stil Muskel-Übersicht), trainierte rot
+  // Flächen: [Muskel, u von, u bis (Grad, 0 = vorne, 90 = links, 180 = hinten), v von, v bis (0 = oben, 1 = unten), Rundung]
+  const TEX = {
+    chest: [["traps", -62, -12, .06, .25], ["traps", 12, 62, .06, .25], ["chest", -74, -3, .28, .62], ["chest", 3, 74, .28, .62], ["abs", -22, -3, .66, 1.02], ["abs", 3, 22, .66, 1.02], ["obl", -78, -26, .66, 1.02], ["obl", 26, 78, .66, 1.02], ["obl", 82, 100, .45, 1.02], ["obl", 260, 278, .45, 1.02],
+      ["traps", 118, 179, .02, .5], ["traps", 181, 242, .02, .5], ["lats", 104, 178, .53, 1.02], ["lats", 182, 256, .53, 1.02]],
+    abdomen: [["abs", -24, -3, -.02, .47], ["abs", 3, 24, -.02, .47], ["abs", -24, -3, .53, 1.02], ["abs", 3, 24, .53, 1.02], ["obl", 28, 100, -.02, 1.02], ["obl", 260, 332, -.02, 1.02], ["lowback", 140, 178, -.02, 1.02], ["lowback", 182, 220, -.02, 1.02], ["lats", 104, 136, -.02, .55], ["lats", 224, 256, -.02, .55]],
+    pelvis: [["abs", -28, -3, -.02, .3], ["abs", 3, 28, -.02, .3], ["obl", 32, 98, -.02, .42], ["obl", 262, 328, -.02, .42], ["lowback", 140, 178, -.02, .3], ["lowback", 182, 220, -.02, .3], ["glutes", 100, 178, .34, .98], ["glutes", 182, 260, .34, .98]],
+    delt: [["delts", -20, 62, .02, .74], ["delts", 66, 122, .02, .78], ["delts", 126, 200, .02, .74]],
+    upper: [["biceps", -62, 62, .1, .9], ["triceps", 68, 116, .06, .7], ["triceps", 120, 178, .04, .9], ["triceps", 182, 240, .04, .9], ["biceps", -116, -66, .3, .92]],
+    fore: [["fore", -100, -8, .03, .8], ["fore", -4, 88, .03, .8], ["fore", 92, 256, .03, .8]],
+    thigh: [["quads", -20, 20, .06, .86], ["quads", 24, 96, .1, .9], ["quads", -72, -24, .46, .93], ["adductors", -128, -76, .05, .62], ["hams", 120, 178, .12, .92], ["hams", 182, 238, .12, .92]],
+    shin: [["shin", 4, 52, .05, .76], ["calves", 112, 178, .04, .6], ["calves", 182, 248, .04, .6], ["calves", 58, 106, .32, .72], ["calves", -106, -58, .32, .72]]
+  };
+  const texCache = {};
+  function tex(kind, on, sphere, mirror) {
+    const key = kind + (sphere ? "s" : "l") + (mirror ? "m" : "") + on.join(",");
+    if (texCache[key]) return texCache[key];
+    const W = 512, H = 256, c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
+    g.fillStyle = "#2b2d30"; g.fillRect(0, 0, W, H);
+    (TEX[kind] || []).forEach(([m, u0, u1, v0, v1]) => {
+      if (mirror) [u0, u1] = [-u1, -u0];
+      const red = on.includes(m), gap = 6;
+      let x0 = (u0 / 360 + (sphere ? .25 : 0)) * W, x1 = (u1 / 360 + (sphere ? .25 : 0)) * W;
+      let y0 = v0 * H, y1 = v1 * H;
+      [-W, 0, W].forEach(off => {
+        const X0 = x0 + off + gap / 2, X1 = x1 + off - gap / 2, Y0 = y0 + gap / 2, Y1 = y1 - gap / 2; if (X1 < 0 || X0 > W) return;
+        const gr = g.createRadialGradient((X0 + X1) / 2, (Y0 + Y1) / 2, 2, (X0 + X1) / 2, (Y0 + Y1) / 2, Math.max(X1 - X0, Y1 - Y0) * .7);
+        gr.addColorStop(0, red ? "#e2564b" : "#c4c6ca"); gr.addColorStop(1, red ? "#b8382f" : "#9a9ca1");
+        g.fillStyle = gr; g.beginPath(); const r = Math.min(26, (X1 - X0) / 2, (Y1 - Y0) / 2);
+        if (g.roundRect) g.roundRect(X0, Y0, X1 - X0, Y1 - Y0, r); else g.rect(X0, Y0, X1 - X0, Y1 - Y0); g.fill();
+      });
+    });
+    const t = new T.CanvasTexture(c); t.anisotropy = 4; t.encoding = T.sRGBEncoding; return texCache[key] = t;
+  }
   function build(sp) {
-    const on = k => sp.muscles.includes(k);
-    const mBody = new T.MeshStandardMaterial({ color: COL.body, roughness: .62, metalness: 0 });
-    const mMus = new T.MeshStandardMaterial({ color: COL.muscle, roughness: .55, metalness: 0 });
-    const mRed = new T.MeshStandardMaterial({ color: COL.red, roughness: .5, metalness: 0 });
-    const M = k => on(k) ? mRed : mMus;
+    const on = sp.muscles;
+    const mBody = new T.MeshStandardMaterial({ color: new T.Color(0x2b2d30).convertSRGBToLinear(), roughness: .78, metalness: 0 });
+    const mat = (kind, sphere, mirror) => new T.MeshStandardMaterial({ map: tex(kind, on, sphere, mirror), roughness: .7, metalness: 0 });
     const J = {};
     const root = new T.Object3D(); J.root = root;
-    // Becken + Gesäß
-    ell(root, .155, .105, .1, 0, -.01, 0, mBody);
-    [1, -1].forEach(sd => ell(root, .082, .095, .07, sd * .07, -.055, -.06, M("glutes"), [0, 0, sd * .1]));
-    // Bauch (Wirbelsäule unten)
+    trunk(root, smooth(.1, -.17, [.128, .132, .138, .146, .153, .158, .16, .158, .152, .14, .12, .09]), .68, mat("pelvis"));
     const spine = J.spine = piv(root, 0, .06, 0);
-    ell(spine, .13, .14, .092, 0, .1, 0, mBody);
-    for (let r = 0; r < 3; r++) [1, -1].forEach(sd => ell(spine, .033, .03, .02, sd * .034, .03 + r * .062, .078, M("abs")));
-    [1, -1].forEach(sd => { ell(spine, .035, .1, .065, sd * .108, .09, .008, M("obl"), [0, 0, -sd * .12]); ell(spine, .032, .11, .03, sd * .034, .09, -.078, M("lowback")); });
-    // Brustkorb
+    trunk(spine, smooth(.2, -.05, [.138, .136, .133, .13, .128, .127, .127, .128, .13]), .66, mat("abdomen"));
     const chest = J.chest = piv(spine, 0, .19, 0);
-    ell(chest, .165, .16, .105, 0, .12, -.005, mBody);
-    [1, -1].forEach(sd => {
-      ell(chest, .088, .068, .04, sd * .075, .15, .072, M("chest"), [-.15, sd * .25, 0]);
-      ell(chest, .075, .15, .045, sd * .1, .07, -.065, M("lats"), [.12, -sd * .3, sd * .22]);
-      ell(chest, .055, .075, .03, sd * .05, .17, -.09, M("lats"));
-      ell(chest, .1, .038, .045, sd * .08, .262, -.03, M("traps"), [0, 0, -sd * .38]);
-    });
-    ell(chest, .07, .1, .035, 0, .2, -.085, M("traps"));
-    // Hals + Kopf (ohne Gesicht)
+    trunk(chest, smooth(.3, -.04, [.06, .118, .152, .168, .174, .174, .172, .168, .162, .155, .148, .142, .138]), .64, mat("chest"));
     const neck = J.neck = piv(chest, 0, .27, 0);
     limb(neck, .1, .05, .048, 0, mBody).position.y = .1;
     ell(neck, .088, .112, .098, 0, .18, .012, mBody);
-    // Arme
     [["L", 1], ["R", -1]].forEach(([s, sd]) => {
       const sh = J["sh" + s] = piv(chest, sd * .195, .225, -.005); sh.userData.base = .225;
-      ell(sh, .066, .075, .07, sd * .012, -.03, 0, M("delts"));
-      limb(sh, .28, .047, .036, .006, mBody);
-      ell(sh, .04, .095, .04, 0, -.15, .028, M("biceps"));
-      ell(sh, .043, .11, .042, 0, -.14, -.028, M("triceps"));
+      ell(sh, .064, .07, .066, sd * .01, -.028, 0, mat("delt", 1));
+      limb(sh, .28, .05, .038, .007, mat("upper", 0, sd < 0));
       const el = J["el" + s] = piv(sh, 0, -.28, 0);
-      ell(el, .041, .041, .041, 0, 0, 0, mBody);
-      limb(el, .25, .04, .028, .008, mBody);
-      ell(el, .043, .1, .041, 0, -.085, .004, M("fore"));
+      ell(el, .034, .034, .034, 0, 0, 0, mBody);
+      limb(el, .25, .042, .028, .009, mat("fore", 0, sd < 0));
       const wr = J["wr" + s] = piv(el, 0, -.255, 0);
       ell(wr, .042, .05, .019, 0, -.045, 0, mBody);
       const fingers = J["fg" + s] = [];
       for (let i = 0; i < 4; i++) { const f = piv(wr, (i - 1.5) * .017, -.088, 0); limb(f, .055 - Math.abs(i - 1.3) * .006, .0095, .008, 0, mBody); fingers.push(f); }
       const th = piv(wr, sd * .036, -.04, .012); th.rotation.z = sd * .55; limb(th, .045, .01, .008, 0, mBody); J["th" + s] = th;
     });
-    // Beine
     [["L", 1], ["R", -1]].forEach(([s, sd]) => {
       const hp = J["hp" + s] = piv(root, sd * .088, -.07, 0);
-      limb(hp, .44, .082, .052, .004, mBody);
-      ell(hp, .062, .17, .052, sd * .004, -.2, .035, M("quads"));
-      ell(hp, .056, .17, .046, 0, -.2, -.036, M("hams"));
+      limb(hp, .44, .084, .052, .006, mat("thigh", 0, sd < 0));
       const kn = J["kn" + s] = piv(hp, 0, -.44, 0);
-      ell(kn, .05, .05, .05, 0, 0, .006, mBody);
-      limb(kn, .42, .052, .032, .004, mBody);
-      ell(kn, .046, .11, .045, 0, -.13, -.028, M("calves"));
+      ell(kn, .046, .046, .046, 0, 0, .004, mBody);
+      limb(kn, .42, .053, .032, .008, mat("shin", 0, sd < 0));
       const an = J["an" + s] = piv(kn, 0, -.42, 0);
       ell(an, .042, .036, .118, 0, -.04, .052, mBody);
     });
@@ -679,13 +695,13 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const r = new T.WebGLRenderer({ canvas, antialias: true, alpha: true }); r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     r.shadowMap.enabled = true; r.shadowMap.type = T.PCFSoftShadowMap; r.outputEncoding = T.sRGBEncoding;
     const scene = new T.Scene();
-    scene.add(new T.HemisphereLight(0xffffff, 0x8a8f94, .75));
-    const key = new T.DirectionalLight(0xffffff, .85); key.position.set(2.5, 4, 3); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
+    scene.add(new T.HemisphereLight(0xffffff, 0x8a8e92, .8));
+    const key = new T.DirectionalLight(0xffffff, .7); key.position.set(2.5, 4, 3); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
     Object.assign(key.shadow.camera, { left: -2, right: 2, top: 2.5, bottom: -1, near: .5, far: 12 }); scene.add(key);
     const rim = new T.DirectionalLight(0xffffff, .35); rim.position.set(-3, 2.5, -3); scene.add(rim);
     const ground = new T.Mesh(new T.CircleGeometry(1.6, 48), new T.ShadowMaterial({ opacity: .22 })); ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
     const J = build(sp); scene.add(J.root); const P = props(sp, mv, scene, J);
-    const [yaw, pitch, dist] = mv.cam, cam = new T.PerspectiveCamera(30, 1, .1, 50);
+    const [yaw, pitch, dist] = (opts && opts.cam) || mv.cam, cam = new T.PerspectiveCamera(30, 1, .1, 50);
     let look = null, fit = dist, stop = false;
     const size = () => { const w = canvas.clientWidth, h = canvas.clientHeight; if (w && (canvas.width !== Math.round(w * r.getPixelRatio()))) { r.setSize(w, h, false); cam.aspect = w / h; cam.updateProjectionMatrix(); } };
     const frame = t => { if (stop) return; if (!canvas.isConnected) { dispose(); return; }
