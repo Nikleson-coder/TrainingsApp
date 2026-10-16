@@ -514,7 +514,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 
 <script>
 (function () {
-// Übungsfigur in 3D: glatte, gesichtslose Figur mit aufgemalten Muskelflächen; trainierte Muskeln rot. Braucht THREE (r128).
+// Übungsfigur in 3D: realistischer Körper (MakeHuman-Modell, CC0) ohne Gesicht; trainierte Muskeln rötlich. Braucht THREE (r128) und figur.bin.
 (function () {
   let T = null, SPH = null; const D2R = Math.PI / 180;
   const COL = { body: 0x2E3033, muscle: 0xB2B4B8, red: 0xD9443A, prop: 0x5B6268, propLight: 0x8A9198 };
@@ -566,127 +566,57 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   const smooth = (top, bot, rs) => rs.map((r, i) => [top + (bot - top) * i / (rs.length - 1), r]);
   const piv = (parent, x, y, z) => { const o = new T.Object3D(); o.position.set(x, y, z); parent.add(o); return o; };
 
-  // Muskelflächen werden als Bild auf den Körper gemalt: grauer Grund (die Fugen), hellgraue Flächen, trainierte rot.
-  // Fläche: [Muskel, Winkel von, bis (Grad: 0 vorne, 90 außen links, 180 hinten), Höhe oben, unten (in m am Körper)]
-  const TORSO = [.585, -.17], ARM = [-.07, .56], LEG = [-.1, .9], NECK = [.315, -.08];
-  const PANELS = {
-    torso: [["traps", -60, -12, .55, .488], ["traps", 12, 60, .55, .488],
-      ["chest", -80, -3, .48, .345], ["chest", 3, 80, .48, .345],
-      ["abs", -26, -3, .335, .265], ["abs", 3, 26, .335, .265], ["abs", -26, -3, .257, .187], ["abs", 3, 26, .257, .187], ["abs", -26, -3, .179, .109], ["abs", 3, 26, .179, .109], ["abs", -28, -3, .1, -.045], ["abs", 3, 28, .1, -.045],
-      ["obl", -100, -29, .335, -.005], ["obl", 29, 100, .335, -.005],
-      ["traps", 112, 179, .57, .345], ["traps", 181, 248, .57, .345], ["traps", 160, 179, .337, .25], ["traps", 181, 200, .337, .25],
-      ["lats", 104, 156, .44, .13], ["lats", 204, 256, .44, .13], ["obl", 104, 156, .122, -.008], ["obl", 204, 256, .122, -.008],
-      ["lowback", 160, 179, .243, -.008], ["lowback", 181, 200, .243, -.008],
-      ["glutes", 104, 179, -.017, -.168], ["glutes", 181, 256, -.017, -.168], ["glutes", 64, 100, -.015, -.135], ["glutes", 260, 296, -.015, -.135]],
-    arm: [["delts", -46, 58, -.065, .12], ["delts", 62, 126, -.07, .13], ["delts", 130, 210, -.065, .12],
-      ["biceps", -64, 60, .13, .28], ["biceps", -122, -68, .15, .28], ["triceps", 64, 118, .135, .27], ["triceps", 122, 179, .125, .28], ["triceps", 181, 236, .125, .28],
-      ["fore", -104, -6, .3, .49], ["fore", -2, 86, .3, .49], ["fore", 90, 254, .3, .47]],
-    leg: [["quads", -24, 24, -.01, .38], ["quads", 28, 108, .0, .4], ["quads", -80, -28, .17, .42], ["adductors", -140, -84, -.04, .25], ["quads", -80, -28, -.02, .16],
-      ["hams", 112, 179, .04, .4], ["hams", 181, 248, .04, .4], ["glutes", 108, 179, -.1, .03], ["glutes", 181, 252, -.1, .03], ["quads", 28, 104, -.1, -.008],
-      ["calves", 112, 179, .46, .68], ["calves", 181, 250, .46, .68], ["calves", 60, 108, .52, .75], ["calves", -108, -60, .52, .75], ["shin", 2, 56, .47, .78], ["shin", -56, -2, .64, .8]],
-    neck: []
-  };
-  const SPAN = { torso: TORSO, arm: ARM, leg: LEG, neck: NECK };
-  const texCache = {};
-  function tex(kind, on, mirror) {
-    const key = kind + (mirror ? "m" : "") + on.join(",");
-    if (texCache[key]) return texCache[key];
-    const W = 1024, H = kind === "torso" ? 1024 : 512, c = document.createElement("canvas"); c.width = W; c.height = H; const g = c.getContext("2d");
-    const [top, bot] = SPAN[kind], vy = y => (kind === "torso" || kind === "neck" ? (top - y) / (top - bot) : (y - top) / (bot - top)) * H;
-    g.fillStyle = "#4a4c50"; g.fillRect(0, 0, W, H);
-    PANELS[kind].forEach(([m, u0, u1, a0, a1]) => {
-      if (mirror) [u0, u1] = [-u1, -u0];
-      const red = on.includes(m), gap = 9, x0 = u0 / 360 * W, x1 = u1 / 360 * W, y0 = vy(a0), y1 = vy(a1);
-      [-W, 0, W].forEach(off => {
-        const X0 = x0 + off + gap / 2, X1 = x1 + off - gap / 2, Y0 = Math.min(y0, y1) + gap / 2, Y1 = Math.max(y0, y1) - gap / 2; if (X1 < 0 || X0 > W) return;
-        const gr = g.createRadialGradient((X0 + X1) / 2, (Y0 + Y1) / 2, 4, (X0 + X1) / 2, (Y0 + Y1) / 2, Math.max(X1 - X0, Y1 - Y0) * .65);
-        gr.addColorStop(0, red ? "#e5594d" : "#b4b6b9"); gr.addColorStop(1, red ? "#bf3d33" : "#96989c");
-        g.fillStyle = gr; g.beginPath(); const r = Math.min(X1 - X0, Y1 - Y0) * .45;
-        if (g.roundRect) g.roundRect(X0, Y0, X1 - X0, Y1 - Y0, r); else g.rect(X0, Y0, X1 - X0, Y1 - Y0); g.fill();
-      });
-    });
-    const t = new T.CanvasTexture(c); t.anisotropy = 8; t.encoding = T.sRGBEncoding; return texCache[key] = t;
+  // Körpermodell (MakeHuman, CC0): wird einmal aus figur.bin gelesen (oder aus window.FIG_DATA als Base64)
+  let MODEL = null;
+  function decode(buf) {
+    const dv = new DataView(buf), hl = dv.getUint32(0, true), h = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, hl)));
+    let o = 4 + hl; const pos = new Int16Array(buf, o, h.n * 3); o += h.n * 6; o += (4 - o % 4) % 4;
+    const idx = new Uint16Array(buf, o, h.t * 3); o += h.t * 6; o += (4 - o % 4) % 4;
+    const si = new Uint8Array(buf, o, h.n * 4); o += h.n * 4; const sw = new Uint8Array(buf, o, h.n * 4); o += h.n * 4; const mus = new Uint8Array(buf, o, h.n * 4);
+    return Object.assign(h, { pos, idx, si, sw, mus });
   }
-
-  // Ein durchgehender, weicher Körperteil (Haut über mehreren Gelenken): Ringe mit Breite und Tiefe vorne/hinten.
-  // rings: [{ c: [x, y, z], rx, rf, rb, w: [[Knochen, Gewicht], …] }] von oben nach unten
-  const ss = (a, b, x) => { const t = Math.min(1, Math.max(0, (x - a) / (b - a))); return t * t * (3 - 2 * t); };
-  function skin(rings, segs) {
-    const pos = [], uv = [], si = [], sw = [], idx = [], R = rings.length;
-    rings.forEach((g, j) => {
-      const w = g.w.slice(0, 4); while (w.length < 4) w.push([0, 0]); const tot = w.reduce((a, b) => a + b[1], 0) || 1;
-      for (let i = 0; i <= segs; i++) {
-        const ph = i / segs * Math.PI * 2, s = Math.sin(ph), co = Math.cos(ph);
-        pos.push(g.c[0] + g.rx * s, g.c[1], g.c[2] + (co > 0 ? g.rf : g.rb) * co);
-        uv.push(i / segs, 1 - j / (R - 1)); si.push(...w.map(x => x[0])); sw.push(...w.map(x => x[1] / tot));
-      }
-    });
-    for (let j = 0; j < R - 1; j++) for (let i = 0; i < segs; i++) { const a = j * (segs + 1) + i, b = a + segs + 1; idx.push(a, b, a + 1, a + 1, b, b + 1); }
-    const geo = new T.BufferGeometry();
-    geo.setAttribute("position", new T.Float32BufferAttribute(pos, 3)); geo.setAttribute("uv", new T.Float32BufferAttribute(uv, 2));
-    geo.setAttribute("skinIndex", new T.Uint16BufferAttribute(si, 4)); geo.setAttribute("skinWeight", new T.Float32BufferAttribute(sw, 4));
-    geo.setIndex(idx); geo.computeVertexNormals();
-    const n = geo.attributes.normal; for (let j = 0; j < R; j++) { const a = j * (segs + 1), b = a + segs; const v = new T.Vector3().fromBufferAttribute(n, a).add(new T.Vector3().fromBufferAttribute(n, b)).normalize(); n.setXYZ(a, v.x, v.y, v.z); n.setXYZ(b, v.x, v.y, v.z); }
-    return geo;
+  function loadModel(cb) {
+    if (MODEL) return cb(MODEL);
+    if (window.FIG_DATA) { const b = atob(window.FIG_DATA), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); MODEL = decode(u.buffer); return cb(MODEL); }
+    fetch("figur.bin").then(r => r.arrayBuffer()).then(b => { MODEL = decode(b); cb(MODEL); }).catch(() => {});
   }
-  // Profil glätten: Stützpunkte [h, rx, rf, rb, (cz), (cx)] → viele Ringe
-  function profile(pts, step) {
-    const out = [];
-    for (let k = 0; k < pts.length - 1; k++) { const A = pts[k], B = pts[k + 1], n = Math.max(1, Math.round(Math.abs(B[0] - A[0]) / step));
-      const P0 = pts[Math.max(0, k - 1)], P3 = pts[Math.min(pts.length - 1, k + 2)], cr = (p0, p1, p2, p3, t) => .5 * (2 * p1 + (p2 - p0) * t + (2 * p0 - 5 * p1 + 4 * p2 - p3) * t * t + (3 * p1 - p0 - 3 * p2 + p3) * t * t * t);
-      for (let i = 0; i < n; i++) { const t = i / n; out.push(A.map((a, m) => m === 0 ? a + (B[0] - a) * t : (v => m < 4 ? Math.max(0, v) : v)(cr(P0[m] || 0, a, B[m] || 0, P3[m] || 0, t)))); } }
-    out.push(pts[pts.length - 1]); return out;
-  }
-
+  let GRIP = .09, SOLE = .098;
   function build(sp) {
-    const on = sp.muscles, lin = c => new T.Color(c).convertSRGBToLinear();
-    const mDark = new T.MeshStandardMaterial({ color: lin(0x45474b), roughness: .75, metalness: 0 });
-    const mSkin = (kind, mirror) => new T.MeshStandardMaterial({ map: tex(kind, on, mirror), roughness: .72, metalness: 0, skinning: true });
-    const J = {}, bone = (parent, x, y, z) => { const o = new T.Bone(); o.position.set(x, y, z); if (parent) parent.add(o); return o; };
-    const root = J.root = bone(null, 0, 0, 0);
-    const spine = J.spine = bone(root, 0, .06, 0), chest = J.chest = bone(spine, 0, .19, 0), neck = J.neck = bone(chest, 0, .27, 0);
-    [["L", 1], ["R", -1]].forEach(([s, sd]) => {
-      const sh = J["sh" + s] = bone(chest, sd * .195, .225, -.005); sh.userData.base = .225;
-      const el = J["el" + s] = bone(sh, 0, -.28, 0), wr = J["wr" + s] = bone(el, 0, -.255, 0);
-      const hp = J["hp" + s] = bone(root, sd * .09, -.07, 0), kn = J["kn" + s] = bone(hp, 0, -.44, 0); J["an" + s] = bone(kn, 0, -.42, 0);
-      // Hand mit Fingern
-      ell(wr, .041, .05, .021, 0, -.047, .002, mDark);
-      const fingers = J["fg" + s] = [];
-      for (let i = 0; i < 4; i++) { const f = new T.Object3D(); f.position.set((i - 1.5) * .018, -.09, 0); wr.add(f); limb(f, .056 - Math.abs(i - 1.3) * .006, .0105, .009, 0, mDark); fingers.push(f); }
-      const th = new T.Object3D(); th.position.set(sd * .037, -.035, .014); th.rotation.z = sd * .55; wr.add(th); limb(th, .046, .011, .009, 0, mDark); J["th" + s] = th;
-      // Fuß
-      const ft = ell(J["an" + s], .044, .042, .12, 0, -.042, .05, mDark); ft.rotation.x = .04;
+    const M = MODEL, V = (k) => new T.Vector3().fromArray(M.j[k]), down = new T.Vector3(0, -1, 0);
+    // Gedachte Gelenkkette mit geraden Gliedern (wie bisher): Arme/Beine hängen in Ruhe gerade nach unten
+    const J = {}, S = {}, node = (parent, p) => { const o = new T.Object3D(); o.position.copy(p); if (parent) parent.add(o); return o; };
+    const seg = (a, b) => V(b).sub(V(a));
+    const root = J.root = node(null, new T.Vector3());
+    J.spine = node(root, seg("root", "spine")); J.chest = node(J.spine, seg("spine", "chest")); J.neck = node(J.chest, seg("chest", "neck"));
+    ["L", "R"].forEach(s => {
+      const sh = J["sh" + s] = node(J.chest, seg("chest", "sh" + s)); sh.userData.base = sh.position.y;
+      const len = (a, b) => new T.Vector3(0, -seg(a, b).length(), 0);
+      const el = J["el" + s] = node(sh, len("sh" + s, "el" + s)), wr = J["wr" + s] = node(el, len("el" + s, "wr" + s));
+      const fg = node(wr, len("wr" + s, "fg" + s)); J["fg" + s] = [fg]; J["fgj" + s] = fg; J["th" + s] = new T.Object3D(); wr.add(J["th" + s]);
+      const hp = J["hp" + s] = node(root, seg("root", "hp" + s)), kn = J["kn" + s] = node(hp, len("hp" + s, "kn" + s)); J["an" + s] = node(kn, len("kn" + s, "an" + s));
+      [["sh", "el"], ["el", "wr"], ["wr", "fg"], ["fg", "fgtip"], ["hp", "kn"], ["kn", "an"]].forEach(([a, b]) => S[a + s] = new T.Quaternion().setFromUnitVectors(seg(a + s, b + s).normalize(), down));
     });
-    // Markierung für die Bildgröße (Kopf oben)
-    const mk = new T.Mesh(new T.BoxGeometry(.01, .01, .01), mDark); mk.position.y = .32; mk.visible = false; neck.add(mk);
-    const B = [root, spine, chest, neck, J.shL, J.elL, J.wrL, J.shR, J.elR, J.wrR, J.hpL, J.knL, J.anL, J.hpR, J.knR, J.anR];
-    const bi = o => B.indexOf(o);
-    root.updateMatrixWorld(true);
-    const skel = new T.Skeleton(B); J.skins = [];
-    const add = (geo, mat) => { const m = new T.SkinnedMesh(geo, mat); m.castShadow = true; m.frustumCulled = false; m.bind(skel, new T.Matrix4()); J.skins.push(m); return m; };
-    // Rumpf (Becken bis Schulterhöhe), y in m über dem Becken: [y, Breite, Tiefe vorne, Tiefe hinten, Versatz vorne]
-    const torso = profile([[.585, 0, 0, 0, -.01], [.575, .045, .04, .045, -.01], [.555, .07, .045, .06, -.01], [.53, .125, .058, .075, -.008], [.495, .18, .08, .094, -.004], [.46, .202, .112, .1, .006],
-      [.4, .198, .124, .104, .012], [.33, .182, .114, .1, .014], [.25, .158, .1, .094, .012], [.17, .138, .09, .086, .008], [.1, .13, .086, .084, .004], [.04, .142, .088, .092, 0],
-      [-.03, .152, .09, .108, -.004], [-.08, .156, .088, .118, -.008], [-.125, .146, .082, .112, -.008], [-.155, .11, .07, .085, -.004], [-.17, 0, 0, 0, 0]], .012);
-    add(skin(torso.map(([y, rx, rf, rb, cz]) => { const wc = ss(.2, .31, y), ws = ss(.01, .1, y); return { c: [0, y, cz], rx, rf, rb, w: [[bi(chest), wc], [bi(spine), (1 - wc) * ws], [bi(root), (1 - wc) * (1 - ws)]] }; }), 72), mSkin("torso"));
-    // Hals und Kopf (h über dem Halsansatz)
-    const nk = profile([[.315, 0, 0, 0, .012], [.305, .04, .045, .045, .012], [.28, .07, .077, .08, .012], [.24, .086, .094, .097, .012], [.2, .089, .098, .1, .013], [.16, .083, .094, .094, .016], [.125, .068, .08, .076, .016],
-      [.095, .052, .054, .056, .01], [.06, .049, .05, .052, .004], [.0, .054, .052, .06, -.004], [-.05, .06, .05, .06, -.008], [-.08, 0, 0, 0, -.01]], .01);
-    const ny = .52;
-    add(skin(nk.map(([h, rx, rf, rb, cz]) => { const wn = ss(-.03, .07, h); return { c: [0, ny + h, cz], rx, rf, rb, w: [[bi(neck), wn], [bi(chest), 1 - wn]] }; }), 48), mDark.clone());
-    J.skins[J.skins.length - 1].material.skinning = true;
-    [["L", 1], ["R", -1]].forEach(([s, sd]) => {
-      // Arm (d = Abstand unter dem Schultergelenk): [d, Breite, Tiefe vorne, Tiefe hinten, vor/zurück, außen]
-      const arm = profile([[-.07, 0, 0, 0, 0, .004], [-.06, .03, .03, .03, 0, .008], [-.045, .052, .052, .054, 0, .012], [-.015, .072, .068, .07, 0, .016], [.03, .072, .064, .068, -.002, .014], [.09, .06, .058, .06, 0, .006],
-        [.15, .054, .058, .054, .004, 0], [.22, .05, .054, .052, .004, 0], [.28, .04, .04, .042, 0, 0], [.32, .044, .042, .044, .002, 0], [.38, .042, .038, .04, .002, 0], [.45, .033, .03, .032, .002, 0], [.52, .026, .021, .023, 0, 0], [.55, .02, .016, .016, 0, 0], [.56, 0, 0, 0, 0, 0]], .01);
-      const sh = J["sh" + s], ox = sd * .195, oy = .475, oz = -.005;
-      add(skin(arm.map(([d, rx, rf, rb, cz, cx]) => { const we = ss(.24, .32, d), ww = ss(.52, .55, d); return { c: [ox + sd * cx, oy - d, oz + cz], rx, rf, rb, w: [[bi(sh), (1 - we)], [bi(J["el" + s]), we * (1 - ww)], [bi(J["wr" + s]), we * ww]] }; }), 48), mSkin("arm", sd < 0));
-      // Bein (d = Abstand unter dem Hüftgelenk)
-      const leg = profile([[-.1, 0, 0, 0, 0, 0], [-.085, .045, .045, .05, 0, 0], [-.04, .075, .075, .078, 0, .002], [.04, .096, .095, .094, .004, .008], [.13, .092, .094, .086, .006, .004], [.24, .082, .084, .076, .006, 0], [.34, .064, .066, .06, .004, 0],
-        [.42, .052, .054, .05, .002, 0], [.47, .05, .05, .056, 0, 0], [.55, .054, .048, .07, -.004, 0], [.63, .05, .044, .064, -.004, 0], [.72, .04, .038, .045, 0, 0], [.8, .032, .032, .034, 0, 0], [.86, .03, .03, .032, .002, 0], [.885, .022, .022, .022, 0, 0], [.9, 0, 0, 0, 0, 0]], .012);
-      const hx = sd * .09, hy = -.07;
-      add(skin(leg.map(([d, rx, rf, rb, cz, cx]) => { const wr = .5 * (1 - ss(-.07, .09, d)), wk = ss(.4, .48, d); return { c: [hx + sd * cx, hy - d, cz], rx, rf, rb, w: [[bi(root), wr], [bi(J["hp" + s]), (1 - wr) * (1 - wk)], [bi(J["kn" + s]), (1 - wr) * wk]] }; }), 48), mSkin("leg", sd < 0));
-    });
+    GRIP = seg("wrL", "fgL").length() * .85; SOLE = M.j.anL[1] - M.ground;
+    // Echte Knochen fürs Modell: Welt-Lage = gedachtes Gelenk × Ausrichtung des Glieds in Ruhe
+    const bones = M.bones.map(k => { const b = new T.Bone(); b.matrixAutoUpdate = false; b.matrixWorld.makeTranslation(...M.j[k]); return b; });
+    const skel = new T.Skeleton(bones);
+    const geo = new T.BufferGeometry(), p = new Float32Array(M.n * 3); for (let i = 0; i < p.length; i++) p[i] = M.pos[i] / M.q;
+    geo.setAttribute("position", new T.BufferAttribute(p, 3)); geo.setIndex(new T.BufferAttribute(M.idx, 1));
+    geo.setAttribute("skinIndex", new T.Uint16BufferAttribute(Array.from(M.si), 4));
+    const w = new Float32Array(M.n * 4); for (let i = 0; i < w.length; i++) w[i] = M.sw[i] / 255; geo.setAttribute("skinWeight", new T.BufferAttribute(w, 4));
+    geo.computeVertexNormals();
+    // Trainierte Muskeln: Anteil je Punkt
+    const on = sp.muscles.map(k => M.keys.indexOf(k)).filter(i => i >= 0), red = new Float32Array(M.n);
+    for (let i = 0; i < M.n; i++) { let r = 0; for (let k = 0; k < 4; k += 2) if (on.includes(M.mus[i * 4 + k])) r = Math.max(r, M.mus[i * 4 + k + 1] / 255); red[i] = r; }
+    const col = new Float32Array(M.n * 3); geo.setAttribute("color", new T.BufferAttribute(col, 3));
+    const base = new T.Color(0x9c9fa3).convertSRGBToLinear(), hot = new T.Color(0xd8483c).convertSRGBToLinear();
+    J.tint = (f) => { for (let i = 0; i < M.n; i++) { const r = red[i] * f; col[i * 3] = base.r + (hot.r - base.r) * r; col[i * 3 + 1] = base.g + (hot.g - base.g) * r; col[i * 3 + 2] = base.b + (hot.b - base.b) * r; } geo.attributes.color.needsUpdate = true; };
+    J.tint(1);
+    const mesh = new T.SkinnedMesh(geo, new T.MeshStandardMaterial({ vertexColors: true, roughness: .62, metalness: 0, skinning: true }));
+    mesh.castShadow = true; mesh.frustumCulled = false; mesh.bind(skel, new T.Matrix4());
+    const rot = {}; M.bones.forEach(k => rot[k] = new T.Matrix4().makeRotationFromQuaternion(S[k] || new T.Quaternion()));
+    J.sync = () => M.bones.forEach((k, i) => { const src = k.startsWith("fg") ? J["fgj" + k.slice(2)] : J[k]; bones[i].matrixWorld.multiplyMatrices(src.matrixWorld, rot[k]); });
+    J.skins = [mesh];
     return J;
   }
 
@@ -709,9 +639,9 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       }
     });
     if (sp.item === "bb") { const g = new T.Group(); const bar = cyl(.014, 1.7); bar.rotation.z = Math.PI / 2; g.add(bar); [-1, 1].forEach(sd => { const pl = cyl(.2, .05); pl.rotation.z = Math.PI / 2; pl.position.x = sd * .62; g.add(pl); }); scene.add(g);
-      P.dyn.push(() => { const a = new T.Vector3(), b = new T.Vector3(); J.wrL.localToWorld(a.set(0, -.07, .005)); J.wrR.localToWorld(b.set(0, -.07, .005)); g.position.copy(a).add(b).multiplyScalar(.5); g.rotation.y = 0; g.rotation.z = Math.atan2(a.y - b.y, a.x - b.x); }); }
-    if (sp.item === "db") ["L", "R"].forEach(s => { if (sp.move === "oneArmRow" && s === "L") return; const g = new T.Group(); const h = cyl(.014, .2); g.add(h); [-1, 1].forEach(sd => { const pl = cyl(.055, .05); pl.position.y = sd * .09; g.add(pl); }); g.position.set(0, -.07, .005); g.rotation.z = Math.PI / 2; J["wr" + s].add(g); });
-    if (sp.item === "handle") ["L", "R"].forEach(s => { const h = cyl(.014, .12); h.position.set(0, -.07, .005); h.rotation.z = Math.PI / 2; J["wr" + s].add(h); });
+      P.dyn.push(() => { const a = new T.Vector3(), b = new T.Vector3(); J.wrL.localToWorld(a.set(0, -GRIP, .005)); J.wrR.localToWorld(b.set(0, -GRIP, .005)); g.position.copy(a).add(b).multiplyScalar(.5); g.rotation.y = 0; g.rotation.z = Math.atan2(a.y - b.y, a.x - b.x); }); }
+    if (sp.item === "db") ["L", "R"].forEach(s => { if (sp.move === "oneArmRow" && s === "L") return; const g = new T.Group(); const h = cyl(.014, .2); g.add(h); [-1, 1].forEach(sd => { const pl = cyl(.055, .05); pl.position.y = sd * .09; g.add(pl); }); g.position.set(0, -GRIP, .005); g.rotation.z = Math.PI / 2; J["wr" + s].add(g); });
+    if (sp.item === "handle") ["L", "R"].forEach(s => { const h = cyl(.014, .12); h.position.set(0, -GRIP, .005); h.rotation.z = Math.PI / 2; J["wr" + s].add(h); });
     return P;
   }
 
@@ -735,14 +665,16 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     J.root.position.set(0, 1, 0); J.root.updateMatrixWorld(true);
     if (mv.anchor === "hip") { J.root.position.set(mv.hip[0], mv.hip[1], mv.hip[2]); return; }
     let p, tgt;
-    if (mv.anchor === "hands") { p = wp(J.wrL, 0, -.07, 0).add(wp(J.wrR, 0, -.07, 0)).multiplyScalar(.5); tgt = new T.Vector3(mv.hands[0], mv.hands[1], mv.hands[2]); }
-    else { const a = wp(J.anL, 0, -.075, .05), b = wp(J.anR, 0, -.075, .05); p = new T.Vector3((a.x + b.x) / 2, Math.min(a.y, b.y), (a.z + b.z) / 2); tgt = new T.Vector3(0, 0, 0); }
+    if (mv.anchor === "hands") { p = wp(J.wrL, 0, -GRIP, 0).add(wp(J.wrR, 0, -GRIP, 0)).multiplyScalar(.5); tgt = new T.Vector3(mv.hands[0], mv.hands[1], mv.hands[2]); }
+    else { const a = wp(J.anL, 0, -SOLE, .05), b = wp(J.anR, 0, -SOLE, .05); p = new T.Vector3((a.x + b.x) / 2, Math.min(a.y, b.y), (a.z + b.z) / 2); tgt = new T.Vector3(0, 0, 0); }
     J.root.position.add(tgt.sub(p));
   }
 
   // Startet die Figur in einem <canvas>; gibt eine Stopp-Funktion zurück
-  function mount(canvas, name, opts) {
-    const sp = spec(name); if (!sp || !window.THREE) return null; T = window.THREE; SPH = SPH || new T.SphereGeometry(1, 40, 28); const mv = MOVES[sp.move];
+  function mount(canvas, name, opts, done) {
+    const sp = spec(name); if (!sp || !window.THREE) return null; T = window.THREE; SPH = SPH || new T.SphereGeometry(1, 40, 28);
+    if (!MODEL) { loadModel(() => { if (canvas.isConnected) { mount(canvas, name, opts); if (done) done(); } }); return true; }
+    if (done) done(); const mv = MOVES[sp.move];
     const r = new T.WebGLRenderer({ canvas, antialias: true, alpha: true }); r.setPixelRatio(Math.min(2, window.devicePixelRatio || 1));
     r.shadowMap.enabled = true; r.shadowMap.type = T.PCFSoftShadowMap; r.outputEncoding = T.sRGBEncoding;
     const scene = new T.Scene();
@@ -758,8 +690,8 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const frame = t => { if (stop) return; if (!canvas.isConnected) { dispose(); return; }
       const ph = opts && opts.phase != null ? opts.phase : (t % 2800) / 2800, e = (1 - Math.cos(ph * Math.PI * 2)) / 2, q = {};
       Object.keys(Object.assign({}, mv.A, mv.B)).forEach(k => { const a = mv.A[k] != null ? mv.A[k] : 0, b = mv.B[k] != null ? mv.B[k] : a; q[k] = a + (b - a) * e; });
-      pose(J, mv, q); anchor(J, mv); scene.updateMatrixWorld(true); P.dyn.forEach(f => f());
-      if (!look) { const bb = new T.Box3().setFromObject(J.root), sz = bb.getSize(new T.Vector3()); look = bb.getCenter(new T.Vector3()); fit = Math.max(sz.y, sz.x * .85, sz.z * .85, 1.2) * 2.3 * (dist / 3.5); }
+      pose(J, mv, q); anchor(J, mv); scene.updateMatrixWorld(true); J.sync(); J.tint(.8 + .2 * e); P.dyn.forEach(f => f());
+      if (!look) { const bb = new T.Box3(); J.root.traverse(o => bb.expandByPoint(o.getWorldPosition(new T.Vector3()))); bb.expandByPoint(wp(J.neck, 0, .26, 0)); bb.expandByScalar(.1); sz = bb.getSize(new T.Vector3()); look = bb.getCenter(new T.Vector3()); fit = Math.max(sz.y, sz.x * .85, sz.z * .85, 1.2) * 2.3 * (dist / 3.5); }
       cam.position.set(look.x + Math.sin(yaw * D2R) * Math.cos(pitch * D2R) * fit, look.y + Math.sin(pitch * D2R) * fit, look.z + Math.cos(yaw * D2R) * Math.cos(pitch * D2R) * fit); cam.lookAt(look);
       size(); r.render(scene, cam); if (!opts || opts.phase == null) requestAnimationFrame(frame); };
     function dispose() { stop = true; r.dispose(); }
@@ -1785,7 +1717,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     phone.querySelectorAll(".tut-target").forEach(t => { t.classList.remove("tut-target", "tut-tap", "tut-info", "tut-abs"); if ("tutStyle" in t.dataset) { t.style.borderRadius = t.style.background = ""; delete t.dataset.tutStyle; } });
     phone.classList.toggle("touring", state.tut != null); const old = phone.querySelector(".tut"); if (old) old.remove();
     if (state.tut != null) { phone.insertAdjacentHTML("beforeend", tutOverlay()); tutMark(); }
-    { const cv = screen.querySelector("canvas[data-fig3d]"); if (cv) loadThree(() => { if (cv.isConnected && Fig3D.mount(cv, cv.dataset.fig3d)) cv.parentNode.classList.add("ready"); }); }
+    { const cv = screen.querySelector("canvas[data-fig3d]"); if (cv) loadThree(() => { if (cv.isConnected) Fig3D.mount(cv, cv.dataset.fig3d, null, () => cv.parentNode.classList.add("ready")); }); }
   }
 
   document.addEventListener("input", e => {
