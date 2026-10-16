@@ -9,6 +9,7 @@
   --font-ui: "Figtree", system-ui, sans-serif;
   /* App, Design "Klar": hell = sanftes Hellgrau (seit 15.10. statt Weiß), Kästchen etwas dunkler */
   --a-bg: #F4F6F4; --a-surface: #E8ECE9; --a-fg: #16201A; --a-muted: #626F67; --a-line: #D8DED9; --a-accent: #4A7F63; --a-accent-fg: #FFFFFF; --a-soft: #E1EAE3; --a-statusbg: #F4F6F4; --a-tabbg: #F4F6F4;
+  --figbase: #CBD3CD; --figm: #DCE3DE; --figs: #7A877F; --figp: #A3AEA7;
   /* Trainingsarten und Phasen */
   --run: #C98B76; --run-soft: #F5EBE6; --strength: #7179B5; --strength-soft: #ECEDF5; --rest: #B5A684; --rest-soft: #F4F0E7; --bike: #6E9C9E; --bike-soft: #E7F0F0; --warm: #D5AE74; --main: #7DA48D; --cool: #7FA0C2; --ok: #4A7F63; --miss: #AE6E64;
 }
@@ -16,12 +17,14 @@
   --page-bg: #0E1210; --page-fg: #E6ECE8; --page-muted: #94A199; --page-line: #2A332E; --bezel: #000000; --seg-bg: #1B221E; --seg-on: #2C3631;
   --a-bg: #111613; --a-surface: #1A211D; --a-fg: #E8EEE9; --a-muted: #96A39B; --a-line: #2A332E; --a-accent: #45B880; --a-accent-fg: #0B1A12; --a-soft: #1D3328; --a-statusbg: #111613; --a-tabbg: #1A211D;
   --run: #F07A5A; --run-soft: #3A2019; --strength: #7C86FF; --strength-soft: #22264F; --rest: #CDB57A; --rest-soft: #332C1C; --bike: #72C2C4; --bike-soft: #1A3233; --warm: #F0AE4E; --main: #45B880; --cool: #66A6E6; --ok: #45B880; --miss: #E07467;
+  --figbase: #26302A; --figm: #36423B; --figs: #8E9B93; --figp: #56645C;
   color-scheme: dark;
 } }
 :root[data-theme="dark"] {
   --page-bg: #0E1210; --page-fg: #E6ECE8; --page-muted: #94A199; --page-line: #2A332E; --bezel: #000000; --seg-bg: #1B221E; --seg-on: #2C3631;
   --a-bg: #111613; --a-surface: #1A211D; --a-fg: #E8EEE9; --a-muted: #96A39B; --a-line: #2A332E; --a-accent: #45B880; --a-accent-fg: #0B1A12; --a-soft: #1D3328; --a-statusbg: #111613; --a-tabbg: #1A211D;
   --run: #F07A5A; --run-soft: #3A2019; --strength: #7C86FF; --strength-soft: #22264F; --rest: #CDB57A; --rest-soft: #332C1C; --bike: #72C2C4; --bike-soft: #1A3233; --warm: #F0AE4E; --main: #45B880; --cool: #66A6E6; --ok: #45B880; --miss: #E07467;
+  --figbase: #26302A; --figm: #36423B; --figs: #8E9B93; --figp: #56645C;
   color-scheme: dark;
 }
 /* Vorschau-Umschalter im Prototyp: erzwingt hell oder dunkel nur im Handy */
@@ -457,6 +460,32 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   .screen > * { animation: rise .22s ease-out both; }
   @keyframes rise { from { transform: translateY(6px); } to { transform: none; } }
 }
+
+svg.fig { width: 100%; height: auto; display: block; }
+.fg-base { fill: var(--figbase); }
+.fg-m { fill: var(--figm); stroke: var(--figs); stroke-width: .8; }
+.fg-m.on { fill: #E0574B; stroke: #B23A30; }
+.fg-line { stroke: var(--figs); stroke-width: 1; }
+.fg-head { fill: var(--figm); stroke: var(--figs); stroke-width: 1; }
+.fg-foot { stroke: var(--figs); stroke-width: 4; stroke-linecap: round; }
+.fg-floor { stroke: var(--figs); stroke-width: 1.2; opacity: .5; }
+.fg-prop { stroke: var(--figp); stroke-width: 4; stroke-linecap: round; }
+.fg-propf { fill: var(--figp); }
+.fg-cable { stroke: var(--figp); stroke-width: 1.4; stroke-dasharray: 3 2; }
+.fg-item { fill: var(--figp); stroke: var(--figs); stroke-width: 1; }
+.fg-itemc { fill: var(--figs); }
+.fg-far { opacity: .45; }
+
+.phone[data-mode="dark"] { --figbase: #26302A; --figm: #36423B; --figs: #8E9B93; --figp: #56645C; }
+.phone[data-mode="light"] { --figbase: #CBD3CD; --figm: #DCE3DE; --figs: #7A877F; --figp: #A3AEA7; }
+.exbtn { width: 100%; text-align: left; font: inherit; color: inherit; cursor: pointer; }
+.exbtn h4 { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.figtag { flex: none; font-size: .74rem; font-weight: 600; color: var(--accent); }
+.figbox { background: var(--surface); border: 1px solid var(--line); border-radius: 18px; padding: 6px 10px 4px; }
+.figmus { display: flex; flex-direction: column; gap: 8px; }
+.figmus > div { display: flex; flex-wrap: wrap; gap: 6px; }
+.mchip { display: inline-flex; align-items: center; gap: 6px; font-size: .82rem; font-weight: 600; padding: 5px 10px; border-radius: 99px; background: var(--surface); border: 1px solid var(--line); }
+.mchip i { width: 8px; height: 8px; border-radius: 50%; background: #E0574B; }
 </style>
 
 <div class="page">
@@ -1229,6 +1258,100 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const best = log.length ? log.reduce((a, x) => sprint ? (avg(x) && avg(x) < avg(a) ? x : a) : (x.sets[0].km > a.sets[0].km ? x : a)) : null;
     return row("Zuletzt", last) + row(sprint ? "Bestzeit" : "Längste", best);
   }
+  // ===== Übungsfigur: Seitenansicht, die die Bewegung vormacht; trainierte Muskeln rot =====
+  const MUSCLE_DE = { traps: "Nacken (Trapez)", delts: "Schultern", chest: "Brust", lats: "Oberer Rücken", lowback: "Unterer Rücken", abs: "Bauch", obl: "Seitliche Bauchmuskeln", biceps: "Bizeps", triceps: "Trizeps", fore: "Unterarme", glutes: "Gesäß", quads: "Oberschenkel vorne", hams: "Oberschenkel hinten", calves: "Waden" };
+  const LEN = { torso: 50, ua: 29, fa: 26, th: 38, sh: 37 }, FLOOR = 196;
+  // Pose: t Oberkörper (0 aufrecht, + nach vorn gebeugt), a Oberarm (0 hängt, 90 nach vorn, 180 nach oben), e Ellbogen gebeugt,
+  // ab Oberarm seitlich (Klimmzug: 180 oben, 0 unten, in der Seitenansicht verkürzt), fa Unterarm absolut, h Oberschenkel (90 = nach vorn), k Knie gebeugt,
+  // h2/k2 zweites Bein, s Schultern hochziehen
+  const FIG_MOVES = {
+    shrug: { anchor: "feet", ax: 92, A: { t: 0, a: 0, e: 0, h: 0, k: 0, s: 0 }, B: { s: -9 } },
+    carry: { anchor: "hip", ax: 96, ay: 120, A: { t: 2, a: 2, e: 0, h: 22, k: 8, h2: -16, k2: 22 }, B: { h: -16, k: 22, h2: 22, k2: 8 } },
+    bentRow: { anchor: "feet", ax: 112, A: { t: 58, a: 0, e: 0, h: 18, k: 26 }, B: { a: -55, e: 60 } },
+    seatRow: { anchor: "hip", ax: 66, ay: 150, props: ["seat", "cableFwd"], A: { t: 0, a: 88, e: 0, h: 86, k: 22 }, B: { t: -6, a: -38, e: 125 } },
+    pullup: { anchor: "hand", ax: 100, ay: 26, props: ["bar"], A: { t: 0, ab: 176, fa: 180, h: 4, k: 22 }, B: { ab: 38, t: -8, h: 14 } },
+    pulldown: { anchor: "hip", ax: 92, ay: 150, props: ["seat", "cableUp"], A: { t: -6, ab: 176, fa: 180, h: 86, k: 80 }, B: { ab: 40, t: -12 } },
+    inverted: { anchor: "hand", ax: 92, ay: 66, props: ["bar"], A: { t: -66, a: 172, e: 0, h: 66, k: 0, foot: 1 }, B: { a: 46, e: 128 } },
+    pullover: { anchor: "feet", ax: 100, props: ["cableHigh"], A: { t: 28, a: 158, e: 12, h: 8, k: 14 }, B: { a: 2, e: 6 } },
+    hyper: { anchor: "hip", ax: 96, ay: 112, props: ["hyperPad"], rel: 1, A: { t: 168, a: 40, e: 125, h: -48, k: 0 }, B: { t: 46 } }
+  };
+  const FIG_MAP = [
+    [/Shrug/i, "shrug", ["traps", "fore"]],
+    [/Farmer/i, "carry", ["traps", "fore", "abs"]],
+    [/Australian/i, "inverted", ["lats", "traps", "biceps"]],
+    [/Klimmz|Chin-?ups/i, "pullup", ["lats", "biceps", "fore"]],
+    [/Latzug/i, "pulldown", ["lats", "biceps"]],
+    [/Überzüge/i, "pullover", ["lats", "triceps"]],
+    [/Rudern.*(Kabelturm|Maschine)/i, "seatRow", ["lats", "traps", "delts", "biceps"]],
+    [/Rudern/i, "bentRow", ["lats", "traps", "delts", "biceps"]],
+    [/Hyperextension/i, "hyper", ["lowback", "glutes", "hams"]]
+  ];
+  const figFor = n => { const m = FIG_MAP.find(([re]) => re.test(n)); if (!m) return null;
+    return { move: m[1], muscles: m[2], item: /Langhantel|SZ-Stange/.test(n) ? "bb" : /Kurzhantel/.test(n) || m[1] === "carry" ? "db" : /Kabelturm|Maschine|Latzug/.test(n) ? "handle" : "" }; };
+  const rad = d => d * Math.PI / 180, dir = (th, l) => [Math.sin(rad(th)) * l, Math.cos(rad(th)) * l], add = (p, v) => [p[0] + v[0], p[1] + v[1]];
+  function figPoints(m, p) {
+    const T = 180 - p.t, H = [0, 0], top = add(H, dir(T, LEN.torso)), S = [top[0], top[1] + (p.s || 0)];
+    let E, W;
+    if (p.ab != null) { const c = Math.cos(rad(p.ab)); E = add(S, [.18 * LEN.ua, c * LEN.ua]); W = add(E, dir(p.fa, LEN.fa)); }
+    else { const a = m.rel ? p.a + T - 180 : p.a; E = add(S, dir(a, LEN.ua)); W = add(E, dir(a + p.e, LEN.fa)); }
+    const K = add(H, dir(p.h, LEN.th)), F = add(K, dir(p.h - p.k, LEN.sh));
+    const K2 = p.h2 != null ? add(H, dir(p.h2, LEN.th)) : null, F2 = K2 ? add(K2, dir(p.h2 - p.k2, LEN.sh)) : null;
+    const pts = { H, top, S, E, W, K, F, K2, F2, T, head: add(top, dir(T, 19)) };
+    const ref = m.anchor === "feet" ? [F[0], F[1] + 4] : m.anchor === "hand" ? W : H, ay = m.anchor === "feet" ? FLOOR : m.ay, dx = m.ax - ref[0], dy = ay - ref[1];
+    for (const k in pts) if (Array.isArray(pts[k])) pts[k] = [pts[k][0] + dx, pts[k][1] + dy];
+    return pts;
+  }
+  // Glied als zweigeteilte Kapsel (vorne/hinten durch einen Strich getrennt); parts = [[Muskel vorne, Muskel hinten, von, bis], ...]
+  function figSeg(A, B, w, parts, on, flip) {
+    const dx = B[0] - A[0], dy = B[1] - A[1], L = Math.hypot(dx, dy), th = Math.atan2(dx, dy) * 180 / Math.PI, r = w / 2;
+    let s = '<g transform="translate(' + A[0].toFixed(1) + " " + A[1].toFixed(1) + ") rotate(" + (-th).toFixed(1) + ')">';
+    s += '<rect class="fg-base" x="' + -r + '" y="' + -r + '" width="' + w + '" height="' + (L + w) + '" rx="' + r + '"/>';
+    parts.forEach(([fr, bk, a, b]) => { const y0 = a === 0 ? -r : a * L, y1 = b === 1 ? L + r : b * L;
+      [[fr, flip ? -r : 0], [bk, flip ? 0 : -r]].forEach(([k, x]) => { if (k) s += '<rect class="fg-m' + (on.includes(k) ? " on" : "") + '" x="' + (x + .8) + '" y="' + (y0 + .8) + '" width="' + (r - 1.6) + '" height="' + (y1 - y0 - 1.6) + '" rx="' + Math.min(r - .8, 4) + '"/>'; }); });
+    return s + '<line class="fg-line" x1="0" y1="' + (-r + 2) + '" x2="0" y2="' + (L + r - 2) + '"/></g>';
+  }
+  function figSvg(f, ph) {
+    const m = FIG_MOVES[f.move], e = (1 - Math.cos(ph * Math.PI * 2)) / 2, p = {};
+    Object.keys(m.A).forEach(k => { p[k] = m.B[k] != null ? m.A[k] + (m.B[k] - m.A[k]) * e : m.A[k]; });
+    const P = figPoints(m, p), on = f.muscles, c = x => x[0].toFixed(1) + " " + x[1].toFixed(1);
+    let s = '<line class="fg-floor" x1="8" y1="' + FLOOR + '" x2="192" y2="' + FLOOR + '"/>';
+    (m.props || []).forEach(k => {
+      if (k === "bar") s += '<line class="fg-prop" x1="' + (P.W[0] - 34) + '" y1="' + P.W[1] + '" x2="' + (P.W[0] + 34) + '" y2="' + P.W[1] + '"/>';
+      if (k === "seat") s += '<rect class="fg-propf" x="' + (P.H[0] - 22) + '" y="' + (P.H[1] + 7) + '" width="34" height="5" rx="2"/><line class="fg-prop" x1="' + (P.H[0] - 5) + '" y1="' + (P.H[1] + 12) + '" x2="' + (P.H[0] - 5) + '" y2="' + FLOOR + '"/>';
+      if (k === "cableFwd") s += '<line class="fg-cable" x1="' + c(P.W).replace(" ", '" y1="') + '" x2="186" y2="' + P.W[1].toFixed(1) + '"/><rect class="fg-propf" x="184" y="40" width="6" height="' + (FLOOR - 40) + '" rx="2"/>';
+      if (k === "cableUp") s += '<line class="fg-cable" x1="' + c(P.W).replace(" ", '" y1="') + '" x2="' + P.W[0].toFixed(1) + '" y2="6"/>';
+      if (k === "cableHigh") s += '<line class="fg-cable" x1="' + c(P.W).replace(" ", '" y1="') + '" x2="186" y2="20"/><rect class="fg-propf" x="184" y="14" width="6" height="' + (FLOOR - 14) + '" rx="2"/>';
+      if (k === "hyperPad") s += '<rect class="fg-propf" x="' + (P.H[0] - 9) + '" y="' + (P.H[1] + 6) + '" width="16" height="7" rx="3" transform="rotate(-40 ' + c(P.H) + ')"/><line class="fg-prop" x1="' + (P.H[0] - 2) + '" y1="' + (P.H[1] + 12) + '" x2="' + (P.H[0] - 2) + '" y2="' + FLOOR + '"/><circle class="fg-propf" cx="' + (P.F[0] - 4).toFixed(1) + '" cy="' + (P.F[1] + 6).toFixed(1) + '" r="4"/>';
+    });
+    const foot = (K, F) => { const fd = dir(Math.atan2(F[0] - K[0], F[1] - K[1]) * 180 / Math.PI + 90, 10); return '<line class="fg-foot" x1="' + F[0].toFixed(1) + '" y1="' + F[1].toFixed(1) + '" x2="' + (F[0] + fd[0]).toFixed(1) + '" y2="' + (F[1] + fd[1]).toFixed(1) + '"/>'; };
+    const leg = (K, F, far) => '<g' + (far ? ' class="fg-far"' : "") + ">" + figSeg(P.H, K, 17, [["quads", "hams", 0, 1]], on) + figSeg(K, F, 12, [["", "calves", 0, .62], ["", "", .62, 1]], on) + foot(K, F) + "</g>";
+    if (P.K2) s += leg(P.K2, P.F2, 1);
+    s += figSeg(P.H, P.top, 30, [["abs", "lowback", 0, .45], ["chest", "lats", .45, .82], ["chest", "traps", .82, 1]], on, 1);
+    s += '<ellipse class="fg-m' + (on.includes("glutes") ? " on" : "") + '" cx="0" cy="0" rx="8" ry="10" transform="translate(' + c(P.H) + ") rotate(" + (-P.T + 180).toFixed(1) + ') translate(-7 -2)"/>';
+    s += leg(P.K, P.F);
+    s += '<circle class="fg-head" cx="' + P.head[0].toFixed(1) + '" cy="' + P.head[1].toFixed(1) + '" r="10"/>';
+    s += figSeg(P.S, P.E, 12, [["biceps", "triceps", 0, 1]], on) + figSeg(P.E, P.W, 10, [["fore", "fore", 0, 1]], on);
+    s += '<circle class="fg-m' + (on.includes("delts") ? " on" : "") + '" cx="' + P.S[0].toFixed(1) + '" cy="' + P.S[1].toFixed(1) + '" r="7"/>';
+    if (f.item === "bb") s += '<circle class="fg-item" cx="' + P.W[0].toFixed(1) + '" cy="' + P.W[1].toFixed(1) + '" r="10"/><circle class="fg-itemc" cx="' + P.W[0].toFixed(1) + '" cy="' + P.W[1].toFixed(1) + '" r="2.5"/>';
+    if (f.item === "db") s += '<rect class="fg-item" x="' + (P.W[0] - 7).toFixed(1) + '" y="' + (P.W[1] - 4).toFixed(1) + '" width="14" height="8" rx="3"/>';
+    if (f.item === "handle") s += '<circle class="fg-itemc" cx="' + P.W[0].toFixed(1) + '" cy="' + P.W[1].toFixed(1) + '" r="3.5"/>';
+    return s;
+  }
+  // Alle sichtbaren Figuren laufen in einer Schleife (eine Bewegung ≈ 2,6 Sekunden)
+  let figRaf = 0;
+  function figLoop() { const els = screen.querySelectorAll("svg[data-fig]"); if (!els.length) { figRaf = 0; return; }
+    const ph = (performance.now() % 2600) / 2600; els.forEach(el => { const f = figFor(el.dataset.fig); if (f) el.innerHTML = figSvg(f, ph); }); figRaf = requestAnimationFrame(figLoop); }
+  const figStart = () => { if (!figRaf) figRaf = requestAnimationFrame(figLoop); };
+  // Übungsseite: Figur, trainierte Muskeln, Zuletzt und PR
+  function viewExInfo() {
+    const n = state.exInfo, x = exEntry(n) || { n }, g = ALL_GROUPS.find(y => y.id === state.group), f = figFor(n);
+    return '<button type="button" class="back" data-back>‹ ' + (g ? g.name : "Zurück") + "</button>" +
+      '<div class="dhead"><span class="label">' + EX_TYPES.find(y => y[0] === (x.t || exType(n)))[1] + "</span><h2>" + esc(n) + "</h2></div>" +
+      (f ? '<div class="figbox"><svg class="fig" viewBox="0 0 200 210" data-fig="' + esc(n) + '" role="img" aria-label="Bewegung ' + esc(n) + '"></svg></div>' +
+        '<div class="figmus"><span class="label">Trainiert</span><div>' + f.muscles.map(k => '<span class="mchip"><i></i>' + MUSCLE_DE[k] + "</span>").join("") + "</div></div>"
+        : '<div class="pr-empty">Für diese Übung gibt es noch keine Figur.</div>') +
+      '<article class="ex">' + recRows(n) + "</article>";
+  }
   function viewGroup() {
     const g = ALL_GROUPS.find(x => x.id === state.group);
     if (g.direct) {
@@ -1238,7 +1361,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
         : '<button type="button" class="split-new" data-exadd>+ Übung hinzufügen</button>';
       return '<button type="button" class="back" data-back>‹ Training</button>' +
         '<div class="dhead"><span class="label">' + (g.skill ? "Skills" : "Kraft") + "</span><h2>" + g.name + '</h2><div class="sub">' + all.length + (all.length === 1 ? " Übung" : " Übungen") + "</div></div>" +
-        '<div class="exlist">' + (all.map(x => '<article class="ex"><div class="ex-top"><h4>' + esc(x.n) + '</h4><small class="ex-type">' + EX_TYPES.find(y => y[0] === (x.t || exType(x.n)))[1] + "</small></div>" + recRows(x.n) + "</article>").join("") ||
+        '<div class="exlist">' + (all.map(x => '<button type="button" class="ex exbtn" data-exinfo="' + esc(x.n) + '"><div class="ex-top"><h4>' + esc(x.n) + (figFor(x.n) ? '<span class="figtag">Anleitung ›</span>' : "") + '</h4><small class="ex-type">' + EX_TYPES.find(y => y[0] === (x.t || exType(x.n)))[1] + "</small></div>" + recRows(x.n) + "</button>").join("") ||
           '<div class="pr-empty"><strong>Noch keine Übungen</strong>Füge unten deine erste Übung hinzu.</div>') + "</div>" + add + sugBox("Übungen von anderen", sugEx(g.id), sugRowEx);
     }
     const unit = g.cardio ? (g.muscles.length === 1 ? " Bereich" : " Bereiche") : " Muskeln";
@@ -1496,7 +1619,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     phone.dataset.mode = state.mode;
     document.querySelectorAll("[data-mode-btn]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.modeBtn === state.mode)));
     document.getElementById("variantNote").textContent = NOTES[state.mode];
-    screen.innerHTML = state.view === "split-edit" && state.draft ? viewSplitEdit() : state.view === "day-edit" && state.draft ? viewDayEdit() : state.view === "workout" && state.wo ? viewWorkout() : state.view === "template" ? viewTemplate() : state.view === "detail" ? viewDetail() : state.view === "plan" ? viewPlan() : state.view === "history" ? viewHistory() : state.view === "rahmen" ? viewRahmen() : state.view === "routines" ? viewRoutines() : state.view === "routine" ? viewRoutine() : state.view === "split" ? viewSplits() : state.view === "split-detail" ? viewSplitDetail() : state.view === "exercises" ? viewExercises() : state.view === "group" ? viewGroup() : state.view === "muscle" ? viewMuscle() : state.view === "profile" ? viewProfile() : state.view === "sug" ? viewSug() : viewHome();
+    screen.innerHTML = state.view === "split-edit" && state.draft ? viewSplitEdit() : state.view === "day-edit" && state.draft ? viewDayEdit() : state.view === "workout" && state.wo ? viewWorkout() : state.view === "template" ? viewTemplate() : state.view === "exinfo" ? viewExInfo() : state.view === "detail" ? viewDetail() : state.view === "plan" ? viewPlan() : state.view === "history" ? viewHistory() : state.view === "rahmen" ? viewRahmen() : state.view === "routines" ? viewRoutines() : state.view === "routine" ? viewRoutine() : state.view === "split" ? viewSplits() : state.view === "split-detail" ? viewSplitDetail() : state.view === "exercises" ? viewExercises() : state.view === "group" ? viewGroup() : state.view === "muscle" ? viewMuscle() : state.view === "profile" ? viewProfile() : state.view === "sug" ? viewSug() : viewHome();
     if (["home", "split", "rahmen", "exercises", "history"].includes(state.view)) screen.insertAdjacentHTML("afterbegin", '<button type="button" class="avatar avatar-btn" data-profile aria-label="Profil öffnen">' + avatarInner() + "</button>");
     // Profilbild immer auf Höhe der Überschrift (wie bei „Hallo Nik“), auch im Verlauf unter dem Umschalter
     { const av = screen.querySelector(".avatar-btn"), h = screen.querySelector(".top h2"); if (av && h) av.style.top = Math.round(h.offsetTop - 12) + "px"; }
@@ -1504,6 +1627,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     phone.querySelectorAll(".tut-target").forEach(t => { t.classList.remove("tut-target", "tut-tap", "tut-info", "tut-abs"); if ("tutStyle" in t.dataset) { t.style.borderRadius = t.style.background = ""; delete t.dataset.tutStyle; } });
     phone.classList.toggle("touring", state.tut != null); const old = phone.querySelector(".tut"); if (old) old.remove();
     if (state.tut != null) { phone.insertAdjacentHTML("beforeend", tutOverlay()); tutMark(); }
+    if (screen.querySelector("svg[data-fig]")) figStart();
   }
 
   document.addEventListener("input", e => {
@@ -1576,6 +1700,8 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     if ("back" in el.dataset && state.view === "detail" && state.planBack) { state.view = "plan"; render(); screen.scrollTop = 0; return; }
     if (el.dataset.tab) { state.planBack = false; state.tab = state.view = el.dataset.tab; state.weekOffset = 0; state.histOffset = 0; render(); screen.scrollTop = 0; return; }
     if (el.dataset.open) { state.detail = el.dataset.open; state.view = "detail"; render(); screen.scrollTop = 0; return; }
+    if (el.dataset.exinfo != null && !state.addEx) { state.exInfo = el.dataset.exinfo; state.view = "exinfo"; render(); screen.scrollTop = 0; return; }
+    if ("back" in el.dataset && state.view === "exinfo") { state.view = "group"; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "day-edit") { state.view = "split-edit"; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "split-edit") { state.view = state.draft.from; state.draft = null; state.draftErr = ""; render(); screen.scrollTop = 0; return; }
     if ("dnew" in el.dataset) { state.draft = Object.assign(newDraft(null), { from: "split" }); state.draftErr = ""; state.view = "split-edit"; render(); screen.scrollTop = 0; return; }
