@@ -514,7 +514,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 
 <script>
 (function () {
-// Übungsfigur in 3D: realistischer Körper (MakeHuman-Modell, CC0) ohne Gesicht; trainierte Muskeln rötlich. Braucht THREE (r128) und figur.bin.
+// Übungsfigur in 3D: realistischer Körper (MakeHuman-Modell, CC0) ohne Gesicht, Muskeln mit Linien getrennt, trainierte rot. Braucht THREE (r128) und figur.bin.
 (function () {
   let T = null, SPH = null; const D2R = Math.PI / 180;
   const COL = { body: 0x2E3033, muscle: 0xB2B4B8, red: 0xD9443A, prop: 0x5B6268, propLight: 0x8A9198 };
@@ -568,17 +568,35 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 
   // Körpermodell (MakeHuman, CC0): wird einmal aus figur.bin gelesen (oder aus window.FIG_DATA als Base64)
   let MODEL = null;
-  function decode(buf) {
+  function decode(buf, cb) {
     const dv = new DataView(buf), hl = dv.getUint32(0, true), h = JSON.parse(new TextDecoder().decode(new Uint8Array(buf, 4, hl)));
-    let o = 4 + hl; const pos = new Int16Array(buf, o, h.n * 3); o += h.n * 6; o += (4 - o % 4) % 4;
+    let o = 4 + hl; const pos = new Int16Array(buf, o, h.n * 3); o += h.n * 6; const uv = new Uint16Array(buf, o, h.n * 2); o += h.n * 4; o += (4 - o % 4) % 4;
     const idx = new Uint16Array(buf, o, h.t * 3); o += h.t * 6; o += (4 - o % 4) % 4;
-    const si = new Uint8Array(buf, o, h.n * 4); o += h.n * 4; const sw = new Uint8Array(buf, o, h.n * 4); o += h.n * 4; const mus = new Uint8Array(buf, o, h.n * 4);
-    return Object.assign(h, { pos, idx, si, sw, mus });
+    const si = new Uint8Array(buf, o, h.n * 4); o += h.n * 4; const sw = new Uint8Array(buf, o, h.n * 4); o += h.n * 4; const nrm = new Int8Array(buf, o, h.n * 3); o += h.n * 3; o += (4 - o % 4) % 4;
+    const pl = dv.getUint32(o, true), png = new Blob([new Uint8Array(buf, o + 4, pl)], { type: "image/png" });
+    // Muskelkarte: je Bildpunkt eine Muskel-Nummer (0 Haut, 254 Linie, 255 außerhalb)
+    const img = new Image(), url = URL.createObjectURL(png);
+    img.onload = () => { const c = document.createElement("canvas"); c.width = img.width; c.height = img.height; const g = c.getContext("2d"); g.drawImage(img, 0, 0);
+      const d = g.getImageData(0, 0, c.width, c.height).data, lab = new Uint8Array(c.width * c.height), ln = new Uint8Array(c.width * c.height); for (let i = 0; i < lab.length; i++) { lab[i] = d[i * 4]; ln[i] = d[i * 4 + 1]; }
+      URL.revokeObjectURL(url); cb(Object.assign(h, { pos, uv, idx, si, sw, nrm, lab, ln, size: c.width })); };
+    img.src = url;
   }
   function loadModel(cb) {
     if (MODEL) return cb(MODEL);
-    if (window.FIG_DATA) { const b = atob(window.FIG_DATA), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); MODEL = decode(u.buffer); return cb(MODEL); }
-    fetch("figur.bin").then(r => r.arrayBuffer()).then(b => { MODEL = decode(b); cb(MODEL); }).catch(() => {});
+    const done = m => { MODEL = m; cb(m); };
+    if (window.FIG_DATA) { const b = atob(window.FIG_DATA), u = new Uint8Array(b.length); for (let i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return decode(u.buffer, done); }
+    fetch("figur.bin").then(r => r.arrayBuffer()).then(b => decode(b, done)).catch(() => {});
+  }
+  // Bild für den Körper: grau, Muskeln mit dunkleren Linien getrennt, trainierte rot
+  const skinCache = {};
+  function skinTex(on) {
+    const key = on.join(","); if (skinCache[key]) return skinCache[key];
+    const M = MODEL, S = M.size, c = document.createElement("canvas"); c.width = c.height = S; const g = c.getContext("2d"), im = g.createImageData(S, S), d = im.data;
+    const base = [156, 159, 163], line = [96, 99, 103], red = [207, 74, 63];
+    const hot = M.keys.map(k => on.includes(k));
+    for (let i = 0; i < M.lab.length; i++) { const l = M.lab[i], col = l > 0 && l < 254 && hot[(l - 1) >> 1] ? red : base, a = M.ln[i] / 255; for (let k = 0; k < 3; k++) d[i * 4 + k] = col[k] + (line[k] - col[k]) * a; d[i * 4 + 3] = 255; }
+    g.putImageData(im, 0, 0);
+    const t = new T.CanvasTexture(c); t.encoding = T.sRGBEncoding; t.anisotropy = 8; t.flipY = false; return skinCache[key] = t;
   }
   let GRIP = .09, SOLE = .098;
   function build(sp) {
@@ -602,17 +620,12 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const skel = new T.Skeleton(bones);
     const geo = new T.BufferGeometry(), p = new Float32Array(M.n * 3); for (let i = 0; i < p.length; i++) p[i] = M.pos[i] / M.q;
     geo.setAttribute("position", new T.BufferAttribute(p, 3)); geo.setIndex(new T.BufferAttribute(M.idx, 1));
+    const uv = new Float32Array(M.n * 2); for (let i = 0; i < uv.length; i++) uv[i] = i % 2 ? 1 - M.uv[i] / 65535 : M.uv[i] / 65535; geo.setAttribute("uv", new T.BufferAttribute(uv, 2));
     geo.setAttribute("skinIndex", new T.Uint16BufferAttribute(Array.from(M.si), 4));
     const w = new Float32Array(M.n * 4); for (let i = 0; i < w.length; i++) w[i] = M.sw[i] / 255; geo.setAttribute("skinWeight", new T.BufferAttribute(w, 4));
-    geo.computeVertexNormals();
-    // Trainierte Muskeln: Anteil je Punkt
-    const on = sp.muscles.map(k => M.keys.indexOf(k)).filter(i => i >= 0), red = new Float32Array(M.n);
-    for (let i = 0; i < M.n; i++) { let r = 0; for (let k = 0; k < 4; k += 2) if (on.includes(M.mus[i * 4 + k])) r = Math.max(r, M.mus[i * 4 + k + 1] / 255); red[i] = r; }
-    const col = new Float32Array(M.n * 3); geo.setAttribute("color", new T.BufferAttribute(col, 3));
-    const base = new T.Color(0x9c9fa3).convertSRGBToLinear(), hot = new T.Color(0xd8483c).convertSRGBToLinear();
-    J.tint = (f) => { for (let i = 0; i < M.n; i++) { const r = red[i] * f; col[i * 3] = base.r + (hot.r - base.r) * r; col[i * 3 + 1] = base.g + (hot.g - base.g) * r; col[i * 3 + 2] = base.b + (hot.b - base.b) * r; } geo.attributes.color.needsUpdate = true; };
-    J.tint(1);
-    const mesh = new T.SkinnedMesh(geo, new T.MeshStandardMaterial({ vertexColors: true, roughness: .62, metalness: 0, skinning: true }));
+    const nr = new Float32Array(M.n * 3); for (let i = 0; i < nr.length; i++) nr[i] = M.nrm[i] / 127; geo.setAttribute("normal", new T.BufferAttribute(nr, 3));
+    J.tint = () => {};
+    const mesh = new T.SkinnedMesh(geo, new T.MeshStandardMaterial({ map: skinTex(sp.muscles), roughness: .62, metalness: 0, skinning: true }));
     mesh.castShadow = true; mesh.frustumCulled = false; mesh.bind(skel, new T.Matrix4());
     const rot = {}; M.bones.forEach(k => rot[k] = new T.Matrix4().makeRotationFromQuaternion(S[k] || new T.Quaternion()));
     J.sync = () => M.bones.forEach((k, i) => { const src = k.startsWith("fg") ? J["fgj" + k.slice(2)] : J[k]; bones[i].matrixWorld.multiplyMatrices(src.matrixWorld, rot[k]); });
@@ -691,7 +704,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       const ph = opts && opts.phase != null ? opts.phase : (t % 2800) / 2800, e = (1 - Math.cos(ph * Math.PI * 2)) / 2, q = {};
       Object.keys(Object.assign({}, mv.A, mv.B)).forEach(k => { const a = mv.A[k] != null ? mv.A[k] : 0, b = mv.B[k] != null ? mv.B[k] : a; q[k] = a + (b - a) * e; });
       pose(J, mv, q); anchor(J, mv); scene.updateMatrixWorld(true); J.sync(); J.tint(.8 + .2 * e); P.dyn.forEach(f => f());
-      if (!look) { const bb = new T.Box3(); J.root.traverse(o => bb.expandByPoint(o.getWorldPosition(new T.Vector3()))); bb.expandByPoint(wp(J.neck, 0, .26, 0)); bb.expandByScalar(.1); sz = bb.getSize(new T.Vector3()); look = bb.getCenter(new T.Vector3()); fit = Math.max(sz.y, sz.x * .85, sz.z * .85, 1.2) * 2.3 * (dist / 3.5); }
+      if (!look) { const bb = new T.Box3(); J.root.traverse(o => bb.expandByPoint(o.getWorldPosition(new T.Vector3()))); bb.expandByPoint(wp(J.neck, 0, .26, 0)); bb.expandByScalar(.1); sz = bb.getSize(new T.Vector3()); look = bb.getCenter(new T.Vector3()); if (opts && opts.lookY) look.y += opts.lookY; fit = Math.max(sz.y, sz.x * .85, sz.z * .85, 1.2) * 2.3 * (dist / 3.5); }
       cam.position.set(look.x + Math.sin(yaw * D2R) * Math.cos(pitch * D2R) * fit, look.y + Math.sin(pitch * D2R) * fit, look.z + Math.cos(yaw * D2R) * Math.cos(pitch * D2R) * fit); cam.lookAt(look);
       size(); r.render(scene, cam); if (!opts || opts.phase == null) requestAnimationFrame(frame); };
     function dispose() { stop = true; r.dispose(); }
