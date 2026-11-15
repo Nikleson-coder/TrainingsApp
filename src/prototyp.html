@@ -526,7 +526,11 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     new Set(Object.keys(a).concat(Object.keys(b))).forEach(k => { const va = a[k] != null ? a[k] : 0, vb = b[k] != null ? b[k] : 0; q[k] = va + (vb - va) * e; }); return q; };
   const S2 = Math.PI * 2;
   // Bänke und Sitze: ["pad", y, z, Winkel°, Länge] = Polster ab Punkt (y, z) Richtung Kopf (Winkel 0 = flach nach hinten, 90 = senkrecht hoch)
-  const bench = (y, z, len) => [["pad", y, z, 0, len], ["box", .08, y - .04, .08, 0, (y - .04) / 2, z - len * .35, 0, 1], ["box", .08, y - .04, .08, 0, (y - .04) / 2, z - len * .8, 0, 1]];
+  const bench = (y, z, len) => [["pad", y, z, 0, len], ["box", .08, y - .04, .08, 0, (y - .04) / 2, z - len * .12, 0, 1], ["box", .08, y - .04, .08, 0, (y - .04) / 2, z - len * .88, 0, 1], ["box", .42, .05, .07, 0, .025, z - len * .12, 0, 1], ["box", .42, .05, .07, 0, .025, z - len * .88, 0, 1], ["box", .08, .05, len * .76, 0, y - .1, z - len / 2, 0, 1]];
+  // Schrägbank mit Gestell: Sitz, Lehne, Bodenschiene mit Füßen, Sitzstütze, Gelenk und Lehnenstütze
+  const incBench = (y, back) => { const a = back * Math.PI / 180, L = .55, sz = -.41 * 0 + (-.06 - L * Math.cos(a)), sy = y + .03 - .04 + L * Math.sin(a) - .04 / Math.cos(a), z0 = Math.min(sz, -.06 - .85 * Math.cos(a)) - .02;
+    return [["pad", y, .32, 180, .42], ["pad", y + .03, -.06, back, .85], ["box", .08, .05, .78 - z0, 0, .025, (.76 + z0) / 2, 0, 1], ["box", .46, .05, .07, 0, .025, .72, 0, 1], ["box", .46, .05, .07, 0, .025, z0 + .03, 0, 1],
+      ["box", .08, y - .1, .08, 0, (y - .1) / 2 + .04, .55, 0, 1], ["box", .09, .05, .5, 0, y - .1, .12, 0, 1], ["box", .08, sy - .04, .08, 0, (sy - .04) / 2 + .04, sz, 0, 1]]; };
   const chair = (y, back) => [["pad", y, .32, 180, .42], ["pad", y + .04, -.08, back, .62], ["box", .08, y - .04, .08, 0, (y - .04) / 2, .1, 0, 1]];
   const MOVES = {
     // ---------- Rücken ----------
@@ -546,7 +550,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     deadhang: { palm: [0, 0, 1], anchor: "hands", hands: [0, 2.25, 0], cam: [200, -4, 3.9], props: ["pullbar"], A: { sa: 165, sf: 14, e: 4, hf: 8, k: 20 }, B: { sa: 165, sf: 16, e: 4, hf: 12, k: 25, p: 3 }, grip: 1, dur: 4000 },
     // ---------- Brust ----------
     benchFlat: { palm: [0, 0, 1], anchor: "hip", hip: [0, .6, 0], cam: [60, 25, 3.6], props: bench(.47, .2, 1.25), A: { p: -90, hf: 12, k: 95, sf: 86, sa: 12, e: 4 }, B: { sf: 14, sa: 74, e: 96 }, grip: 1 },
-    benchIncline: { palm: [0, .5, 1], anchor: "hip", hip: [0, .6, 0], cam: [60, 18, 3.6], props: [["pad", .47, .32, 180, .42], ["pad", .5, -.06, 50, .85], ["box", .08, .43, .08, 0, .21, 0, 0, 1]], A: { p: -50, hf: 40, k: 85, sf: 125, sa: 12, e: 4 }, B: { sf: 40, sa: 72, e: 96 }, grip: 1 },
+    benchIncline: { palm: [0, .5, 1], anchor: "hip", hip: [0, .6, 0], cam: [60, 18, 3.6], props: incBench(.47, 50), A: { p: -50, hf: 35, k: 80, sf: 125, sa: 12, e: 4 }, B: { sf: 34, sa: 76, e: 86 }, grip: 1, level: 1 },
     pressMachine: { palm: [0, -1, 0], anchor: "hip", hip: [0, .58, 0], cam: [40, 12, 3.5], props: chair(.46, 78), A: { p: -10, hf: 95, k: 90, sf: 5, sa: 80, e: 95 }, B: { sf: 88, sa: 12, e: 5 }, grip: 1 },
     pressDown: { palm: [0, -1, 0], anchor: "hip", hip: [0, .58, 0], cam: [40, 12, 3.5], props: chair(.46, 78), A: { p: -10, hf: 95, k: 90, sf: -10, sa: 70, e: 95 }, B: { sf: 55, sa: 12, e: 5 }, grip: 1 },
     fly: { palmLocal: [-1, 0, 0], anchor: "hip", hip: [0, .58, 0], cam: [30, 18, 3.5], props: chair(.46, 82), A: { p: -6, hf: 95, k: 90, sf: 88, sy: 80, e: 18 }, B: { sy: 2, e: 14 }, grip: 1 },
@@ -585,7 +589,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     hammerCable: { palmLocal: [-1, 0, 0], anchor: "feet", cam: [55, 8, 3.4], props: [["cable", 0, .15, .45, "both"], ["box", .16, 2.3, .16, 0, 1.15, .55, 0, 1]], A: { e: 6, sf: 6, sa: 4 }, B: { e: 135, sf: 12 }, grip: 1 },
     hammerCable1: { palmLocal: [-1, 0, 0], anchor: "feet", cam: [55, 8, 3.4], props: [["cable", -.15, .15, .45, "R"], ["box", .16, 2.3, .16, -.15, 1.15, .55, 0, 1]], A: { eR: 6, sfR: 6, saL: 6 }, B: { eR: 135, sfR: 12 }, grip: 1, one: "R" },
     reverseCurlCable: { palmLocal: [0, 0, -1], anchor: "feet", cam: [55, 8, 3.4], props: [["cable", 0, .15, .45, "both"], ["box", .16, 2.3, .16, 0, 1.15, .55, 0, 1]], A: { e: 6, sf: 6, sa: 4 }, B: { e: 130, sf: 12 }, grip: 1 },
-    curlBehind: { palmLocal: [0, 0, 1], anchor: "hip", hip: [0, .6, 0], cam: [70, 12, 3.5], props: [["pad", .47, .32, 180, .42], ["pad", .5, -.06, 55, .85], ["box", .08, .43, .08, 0, .21, 0, 0, 1]], A: { p: -40, hf: 50, k: 85, sf: -40, e: 6 }, B: { e: 135, sf: -36 }, grip: 1 },
+    curlBehind: { palmLocal: [0, 0, 1], anchor: "hip", hip: [0, .6, 0], cam: [70, 12, 3.5], props: incBench(.47, 55), A: { p: -40, hf: 50, k: 85, sf: -40, e: 6 }, B: { e: 135, sf: -36 }, grip: 1 },
     curlBehindCable: { palmLocal: [0, 0, 1], anchor: "feet", cam: [70, 10, 3.5], props: [["cable", 0, .25, -.6, "both"], ["box", .16, 2.3, .16, 0, 1.15, -.7, 0, 1]], A: { p: -4, hfL: 25, kL: 15, hfR: -15, kR: 10, sf: -30, e: 6 }, B: { e: 135, sf: -26 }, grip: 1 },
     spider: { palmLocal: [0, 0, 1], anchor: "feet", cam: [70, 10, 3.5], props: [["pad", .78, .12, 135, .55], ["box", .08, .8, .08, 0, .4, .2, 0, 1]], A: { p: 45, hf: 50, k: 12, sf: 45, e: 4 }, B: { e: 135 }, grip: 1 },
     skull: { palmLocal: [0, 0, -1], anchor: "hip", hip: [0, .6, 0], cam: [60, 22, 3.6], props: bench(.47, .2, 1.25), A: { p: -90, hf: 12, k: 95, sf: 92, sa: 8, e: 4 }, B: { sf: 112, e: 118 }, grip: 1 },
@@ -649,7 +653,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     sprint: { anchor: "floor", on: "feet", cam: [70, 6, 3.8], dur: 650, foot: 1, fn: ph => { const w = ph * S2, s = Math.sin(w), c = Math.cos(w);
       return { p: 16, hfL: 50 * s + 22, kL: 35 + 75 * Math.max(0, -c), hfR: -50 * s + 22, kR: 35 + 75 * Math.max(0, c), sfL: -55 * s + 10, sfR: 55 * s + 10, e: 90, sa: 4, pfL: 15 * c, pfR: -15 * c, ry: .05 * Math.abs(Math.sin(2 * w)) }; } },
     bike: { palmLocal: [0, 0, -1], anchor: "hip", hip: [0, .95, 0], cam: [70, 10, 3.8], props: ["bike"], dur: 1100, foot: 1, grip: 1, fn: ph => { const w = ph * S2;
-      return { p: 38, hfL: 95 + 28 * Math.sin(w), kL: 75 + 38 * Math.cos(w), hfR: 95 - 28 * Math.sin(w), kR: 75 - 38 * Math.cos(w), pfL: 10 * Math.sin(w), pfR: -10 * Math.sin(w), sf: 68, e: 22, sa: 6 }; } },
+      return { p: 28, hfL: 95 + 28 * Math.sin(w), kL: 75 + 38 * Math.cos(w), hfR: 95 - 28 * Math.sin(w), kR: 75 - 38 * Math.cos(w), pfL: 10 * Math.sin(w), pfR: -10 * Math.sin(w), sf: 95, e: 12, sa: 6 }; } },
     swim: { anchor: "hip", hip: [0, .85, 0], cam: [60, 16, 4.2], props: ["water"], dur: 1800, foot: 1, fn: ph => { const w = ph * S2;
       return { p: 90, sfL: 180 - 360 * ph, sfR: 360 - 360 * ph, eL: 20 + 25 * Math.max(0, Math.sin(w)), eR: 20 + 25 * Math.max(0, -Math.sin(w)), sa: 8, hfL: 12 * Math.sin(4 * w), hfR: -12 * Math.sin(4 * w), k: 10, pf: 40, nk: -20 }; } }
   };
@@ -928,13 +932,16 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       if (k === "water") { const w = new T.Mesh(new T.PlaneGeometry(3.2, 3.2), new T.MeshStandardMaterial({ color: 0x8fb3c4, transparent: true, opacity: .35, roughness: .2 })); w.rotation.x = -Math.PI / 2; w.position.y = mv.hip[1] + .02; scene.add(w); }
       if (k === "footPlate" || k === "shinPad") { const b = new T.Mesh(new T.BoxGeometry(.55, k === "shinPad" ? .1 : .5, .06), k === "shinPad" ? mL : mP); b.castShadow = true; scene.add(b);
         P.dyn.push(() => { const a = wp(J.anL, 0, k === "shinPad" ? .06 : -SOLE - .03, k === "shinPad" ? .1 : .05), c = wp(J.anR, 0, k === "shinPad" ? .06 : -SOLE - .03, k === "shinPad" ? .1 : .05); b.position.copy(a).add(c).multiplyScalar(.5); J.anL.getWorldQuaternion(b.quaternion); b.rotateX(-Math.PI / 2); }); }
-      if (k === "bike") { const c = (r, l) => cyl(r, l, mP);
-        const crank = new T.Vector3(0, .32, .3), frame = [[0, mv.hip[1] - .1, -.05, 0, crank.y, crank.z], [0, crank.y, crank.z, 0, 1.0, .72], [0, mv.hip[1] - .1, -.05, 0, 1.0, .72]];
-        frame.forEach(f => { const a = new T.Vector3(f[0], f[1], f[2]), b = new T.Vector3(f[3], f[4], f[5]), m = c(.025, a.distanceTo(b)); m.position.copy(a).add(b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), b.clone().sub(a).normalize()); scene.add(m); });
+      if (k === "bike") { const c = (r, l) => cyl(r, l, mP), seg = (m, a, b) => { m.scale.y = a.distanceTo(b); m.position.copy(a).add(b).multiplyScalar(.5); m.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), b.clone().sub(a).normalize()); };
+        const crank = new T.Vector3(0, .32, .3), seatP = new T.Vector3(0, mv.hip[1] - .1, -.05), tubes = [c(.025, 1), c(.025, 1), c(.025, 1), c(.02, 1)]; tubes.forEach(m => scene.add(m)); seg(tubes[0], seatP, crank);
         box(.26, .05, .12, 0, mv.hip[1] - .08, -.02, mP); const fly = cyl(.24, .05, mP); fly.rotation.z = Math.PI / 2; fly.position.set(0, .3, .6); scene.add(fly); box(.5, .05, .7, 0, .025, .25, mP);
+        const hub = cyl(.05, .1, mP); hub.rotation.z = Math.PI / 2; hub.position.copy(crank); scene.add(hub);
         const hb = new T.Mesh(new T.CylinderGeometry(BAR, BAR, .5, 16), mP); hb.rotation.z = Math.PI / 2; scene.add(hb);
-        P.dyn.push(() => { const a = hp("L"), b = hp("R"); hb.position.copy(a).add(b).multiplyScalar(.5); });
-        ["L", "R"].forEach(s => { const arm = c(.015, 1); scene.add(arm); P.dyn.push(() => { const f = wp(J["an" + s], 0, -SOLE + .02, .05); f.x = s === "L" ? .12 : -.12; const a = crank.clone(); a.x = f.x; arm.scale.y = a.distanceTo(f); arm.position.copy(a).add(f).multiplyScalar(.5); arm.quaternion.setFromUnitVectors(new T.Vector3(0, 1, 0), f.clone().sub(a).normalize()); }); }); }
+        // Lenker sitzt dort, wo die Hände greifen; Rahmen und Lenkerstange gehen bis dorthin
+        P.dyn.push(() => { const a = hp("L"), b = hp("R"); hb.position.copy(a).add(b).multiplyScalar(.5); const head = hb.position.clone(); head.x = 0; head.y -= .06; head.z -= .04;
+          seg(tubes[1], crank, head); seg(tubes[2], seatP, head); seg(tubes[3], head, hb.position.clone().setX(0)); });
+        ["L", "R"].forEach(s => { const arm = c(.022, 1), ped = new T.Mesh(new T.BoxGeometry(.13, .035, .11), mP); ped.castShadow = true; scene.add(arm); scene.add(ped);
+          P.dyn.push(() => { const f = wp(J["an" + s], 0, -SOLE - .015, .07); f.x = s === "L" ? .12 : -.12; const a = crank.clone(); a.x = f.x * .55; seg(arm, a, f); ped.position.copy(f); }); }); }
       if (k === "pullbar") { const c = cyl(BAR, 1.6); c.rotation.z = Math.PI / 2; c.position.set(0, mv.hands[1], mv.hands[2]); scene.add(c); [-1, 1].forEach(sd => box(.06, mv.hands[1] + .05, .06, sd * .8, (mv.hands[1] + .05) / 2, mv.hands[2], mP)); }
       if (k === "lowbar") { const c = cyl(BAR, 1.5); c.rotation.z = Math.PI / 2; c.position.set(0, mv.hands[1], mv.hands[2]); scene.add(c); [-1, 1].forEach(sd => box(.06, mv.hands[1], .06, sd * .75, mv.hands[1] / 2, mv.hands[2], mP)); }
       if (k === "seat") box(.42, .08, .42, 0, mv.hip[1] - .13, -.02);
@@ -984,6 +991,12 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       if (Math.hypot(h.x, h.z) < 1e-3) return;
       let a = Math.atan2(p.z, p.x) - Math.atan2(h.z, h.x); a = Math.atan2(Math.sin(a), Math.cos(a));
       el.rotation.y = a * .5; wr.rotation.y = a * .5; }); }
+    // mv.level: Handgelenk seitlich abknicken, damit Kurzhanteln waagerecht quer liegen (nicht schräg nach innen)
+    if (mv.level) { J.root.updateMatrixWorld(true); ["L", "R"].forEach(s => {
+      const wr = J["wr" + s]; wr.updateMatrixWorld(true); const wq = wr.getWorldQuaternion(new T.Quaternion()), n = J.FG[s].pn.clone().applyQuaternion(wq).normalize(), d = J.FG[s].dir.clone().applyQuaternion(wq).normalize();
+      const t = new T.Vector3(d.x >= 0 ? 1 : -1, 0, 0); t.addScaledVector(n, -t.dot(n)); if (t.lengthSq() < 1e-4) return; t.normalize();
+      let a = Math.atan2(new T.Vector3().crossVectors(d, t).dot(n), d.dot(t)); a = Math.max(-.6, Math.min(.6, a));
+      wr.quaternion.multiply(new T.Quaternion().setFromAxisAngle(J.FG[s].pn.clone().normalize(), a)); }); }
   }
   const wp = (o, x, y, z) => o.localToWorld(new T.Vector3(x, y, z));
   // Auflagepunkte am Körper (Punkt, Abstand bis zur Hautoberfläche)
