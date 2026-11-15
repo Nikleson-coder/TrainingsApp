@@ -363,6 +363,15 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 .phase li.blk { padding: 0; }
 .blkbtn { width: 100%; display: flex; align-items: center; gap: 10px; padding: 12px; background: none; border: 0; color: inherit; font: inherit; text-align: left; cursor: pointer; }
 .blkbtn .exn { flex: 1; }
+.phase li.blk { align-items: center; gap: 0; flex-wrap: nowrap; }
+.phase li.blk .blkbtn { flex: 1; min-width: 0; width: auto; }
+.bx { flex: none; width: 34px; height: 34px; margin-right: 8px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer; padding: 0; }
+.bx svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.2; fill: none; stroke-linecap: round; }
+.phase li.addg { opacity: .65; }
+.phase li.addg .blkbtn strong { color: var(--muted); font-weight: 700; }
+.group.has-x { display: flex; align-items: center; } .group.has-x .group-head { flex: 1; min-width: 0; } .group.has-x .bx { margin-right: 12px; }
+.split-new.addg { opacity: .75; margin-top: 2px; }
+.wslotw { display: flex; align-items: center; gap: 8px; } .wslotw .wslot { flex: 1; min-width: 0; } .wslotw .bx { margin-right: 0; }
 .phase li.blk > .exn { padding: 12px; }
 .whead { display: flex; flex-direction: column; gap: 8px; }
 .wprog { display: flex; gap: 4px; }
@@ -1337,7 +1346,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   // Zustand: abgeschlossene Abschnitte je Tag
   // logs: je Übung Liste von Einheiten { d: "JJJJ-MM-TT", split, sets: [{ kg, reps } | { km, min } | { m, s }] }
   // wo: laufendes Training { key, split, day, step, data: { Übung: { n: Satzanzahl, sets: [...] } } }
-  const state = { view: "home", tab: "home", detail: null, weekOffset: 0, mode: "auto", split: "ka", splitDetail: null, tplDay: null, group: null, muscle: null, histOffset: 0, histMode: "week", monthOffset: 0, profile: { name: "", photo: "", weight: "", height: "" }, exFilter: "all", sections: {}, logs: {}, picks: {}, done: {}, userSplits: {}, routines: { warm: [], cool: [] }, rpicks: {}, userEx: {}, addEx: false, addExType: "w", rSeeded: false, rKind: "warm", rId: null, draft: null, draftDay: 0, wo: null, weekOrder: {} };
+  const state = { view: "home", tab: "home", detail: null, weekOffset: 0, mode: "auto", split: "ka", splitDetail: null, tplDay: null, group: null, muscle: null, histOffset: 0, histMode: "week", monthOffset: 0, profile: { name: "", photo: "", weight: "", height: "" }, exFilter: "all", sections: {}, logs: {}, picks: {}, done: {}, userSplits: {}, routines: { warm: [], cool: [] }, rpicks: {}, userEx: {}, addEx: false, addExType: "w", rSeeded: false, rKind: "warm", rId: null, draft: null, draftDay: 0, wo: null, weekOrder: {}, blockOv: {}, addGrp: null };
   const STORE = window.TA_STORE || "trainingsapp-v2";
   try {
     const saved = JSON.parse(localStorage.getItem(STORE) || "null");
@@ -1345,7 +1354,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       ["sections", "logs", "picks", "done", "userSplits"].forEach(k => Object.assign(state[k], saved[k] || {}));
       Object.keys(state.picks).filter(k => !k.includes("|")).forEach(k => { state.picks[k + "|" + (saved.split || "ka") + "|" + ((new Date(k + "T00:00:00").getDay() + 6) % 7)] = state.picks[k]; delete state.picks[k]; });
       [["Dauerlauf", "Joggen"], ["Sprints", "Sprinten"], ["Radfahren draußen oder Peloton", "Fahrrad draußen"]].forEach(([o, n]) => { if (state.logs[o]) { state.logs[n] = (state.logs[n] || []).concat(state.logs[o]); delete state.logs[o]; } });
-      if (saved.mode) state.mode = saved.mode; if (saved.split) state.split = saved.split; if (saved.profile) Object.assign(state.profile, saved.profile); if (saved.wo) state.wo = saved.wo; if (saved.routines) state.routines = Object.assign({ warm: [], cool: [] }, saved.routines); if (saved.rpicks) state.rpicks = saved.rpicks; if (saved.userEx) state.userEx = saved.userEx; if (saved.weekOrder) state.weekOrder = saved.weekOrder; state.rSeeded = !!saved.rSeeded; state.rSeedWarm1 = !!saved.rSeedWarm1; state.rSeedCool1 = !!saved.rSeedCool1; state.tutDone = !!saved.tutDone;
+      if (saved.mode) state.mode = saved.mode; if (saved.split) state.split = saved.split; if (saved.profile) Object.assign(state.profile, saved.profile); if (saved.wo) state.wo = saved.wo; if (saved.routines) state.routines = Object.assign({ warm: [], cool: [] }, saved.routines); if (saved.rpicks) state.rpicks = saved.rpicks; if (saved.userEx) state.userEx = saved.userEx; if (saved.weekOrder) state.weekOrder = saved.weekOrder; if (saved.blockOv) state.blockOv = saved.blockOv; state.rSeeded = !!saved.rSeeded; state.rSeedWarm1 = !!saved.rSeedWarm1; state.rSeedCool1 = !!saved.rSeedCool1; state.tutDone = !!saved.tutDone;
     } else {
       // Aus der alten Version nur Einstellungen und Profil übernehmen, keine Beispielwerte
       const old = JSON.parse(localStorage.getItem("trainingsapp-proto") || "null");
@@ -1371,11 +1380,12 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   // Beispielroutinen aus Version 59 wieder entfernen
   state.routines.warm = state.routines.warm.filter(r => r.id !== "rw-beispiel");
   state.routines.cool = state.routines.cool.filter(r => r.id !== "rc-beispiel");
-  function save() { try { const json = JSON.stringify({ savedAt: Date.now(), sections: state.sections, logs: state.logs, picks: state.picks, done: state.done, userSplits: state.userSplits, routines: state.routines, rpicks: state.rpicks, userEx: state.userEx, weekOrder: state.weekOrder, rSeeded: state.rSeeded, rSeedWarm1: state.rSeedWarm1, rSeedCool1: state.rSeedCool1, tutDone: !!state.tutDone, wo: state.wo, mode: state.mode, split: state.split, profile: state.profile }); localStorage.setItem(STORE, json); if (window.TA_cloud) window.TA_cloud(json); } catch (e) {} }
+  function save() { try { const json = JSON.stringify({ savedAt: Date.now(), sections: state.sections, logs: state.logs, picks: state.picks, done: state.done, userSplits: state.userSplits, routines: state.routines, rpicks: state.rpicks, userEx: state.userEx, weekOrder: state.weekOrder, blockOv: state.blockOv, rSeeded: state.rSeeded, rSeedWarm1: state.rSeedWarm1, rSeedCool1: state.rSeedCool1, tutDone: !!state.tutDone, wo: state.wo, mode: state.mode, split: state.split, profile: state.profile }); localStorage.setItem(STORE, json); if (window.TA_cloud) window.TA_cloud(json); } catch (e) {} }
   const secs = k => state.sections[k] || [false, false, false];
   const isDone = k => secs(k).every(Boolean);
 
   const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+  const xSvg = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>';
   const checkSvg = '<svg viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
 
   function phasebar(p) {
@@ -1533,7 +1543,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   }
   // Drei Abschnitte mit Übungsliste; s = abgehakte Abschnitte (null = Vorlage ohne Haken)
   function phaseCards(p, split, day, s, before, curKey, tapKey) {
-    const B = blocksOf(split, day), picks = B && curKey ? picksFor(curKey, split, day) : null;
+    const B = blocksOf(split, day, curKey || tapKey), picks = B && curKey ? picksFor(curKey, split, day) : null;
     const exs = B ? null : ((EX_PLAN[split] || {})[day] || []).length ? EX_PLAN[split][day] : null, lastRow = n => { const l = lastInSplit(n, split, before);
       return '<div class="last"><span>Letztes Mal' + (l ? " · " + fmt(new Date(l.d + "T00:00:00"), { day: "numeric", month: "short" }) : "") + "</span><b" + (l ? "" : ' class="none"') + ">" + (l ? fmtSession(l, n) : "noch kein Eintrag") + "</b></div>"; };
     let nr = 0;
@@ -1544,9 +1554,12 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       return '<ul class="exs"><li class="exrow blk">' + (tapKey ? '<button type="button" class="blkbtn" data-wopen="' + (r ? k : "rpick:" + k) + '" data-wkey="' + tapKey + '" data-wsplit="' + split + '" data-wday="' + day + '">' + inner + chev + "</button>" : inner) + "</li></ul>"; };
     const blockList = B ? '<ul class="exs">' + B.map(([g, c]) => { nr += c; const names = Array.from({ length: c }, (_, k) => picks && picks[g + ":" + k]).filter(Boolean);
       const inner = '<div class="exn"><strong>' + gName(g) + "</strong><small>" + (names.length ? names.map(esc).join(" · ") : c + (c === 1 ? " Übung" : " Übungen") + " frei wählbar") + "</small></div>";
-      return '<li class="exrow blk">' + (tap ? '<button type="button" class="blkbtn" data-wopen="group:' + g + '" data-wkey="' + tapKey + '" data-wsplit="' + split + '" data-wday="' + day + '">' + inner + chev + "</button>" : inner) + "</li>"; }).join("") + "</ul>" : "";
+      const at = '" data-wkey="' + tapKey + '" data-wsplit="' + split + '" data-wday="' + day + '"';
+      return '<li class="exrow blk">' + (tap ? '<button type="button" class="blkbtn" data-wopen="group:' + g + at + '>' + inner + chev + "</button>" +
+        '<button type="button" class="bx" data-bxdel="' + g + at + ' aria-label="' + gName(g) + ' entfernen">' + xSvg + "</button>" : inner) + "</li>"; }).join("") +
+      (tap ? '<li class="exrow blk addg"><button type="button" class="blkbtn" data-bxadd="detail" data-wkey="' + tapKey + '" data-wsplit="' + split + '" data-wday="' + day + '"><div class="exn"><strong>+ Muskelgruppe hinzufügen</strong></div></button></li>' : "") + "</ul>" : "";
     return PHASES.map((ph, i) =>
-      '<section class="phase ph-' + ph.key + (s && s[i] ? " done" : "") + '"><header><span class="n">' + (i + 1) + '</span><div class="hx"><h3>' + ph.name + '</h3><div class="hmeta">' + (i === 1 && B ? B.map(b => gName(b[0])).join(", ") : i === 1 && exs ? exs.length + (exs.length === 1 ? " Einheit" : " Übungen") : ph.hint) + "</div></div>" +
+      '<section class="phase ph-' + ph.key + (s && s[i] ? " done" : "") + '"><header><span class="n">' + (i + 1) + '</span><div class="hx"><h3>' + ph.name + '</h3><div class="hmeta">' + (i === 1 && B ? (B.length ? B.map(b => gName(b[0])).join(", ") : "Noch keine Muskelgruppe") : i === 1 && exs ? exs.length + (exs.length === 1 ? " Einheit" : " Übungen") : ph.hint) + "</div></div>" +
       (s ? '<button type="button" class="check" data-sec="' + i + '" aria-pressed="' + s[i] + '" aria-label="' + ph.name + ' abhaken">' + checkSvg + "</button>" : "") + "</header>" +
       (i === 1 && B ? blockList : i === 1 && exs ? '<ul class="exs">' + exs.map(n => { const l = lastInSplit(n, split, before);
         return '<li class="exrow"><div class="exn"><strong>' + esc(n) + "</strong></div>" +
@@ -1643,7 +1656,9 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 
   // Laufendes Training: Aufwärmen, dann jede Übung einzeln, dann Cooldown
   // Trainings mit Bereichen: je Bereich n frei wählbare Übungen aus der Liste des Splits
-  const blocksOf = (split, day) => {
+  // Bereiche eines Trainings; mit key: an diesem Tag geänderte Bereiche (state.blockOv) haben Vorrang
+  const blocksOf = (split, day, key) => {
+    if (key && state.blockOv[key + "|" + split + "|" + day]) return state.blockOv[key + "|" + split + "|" + day];
     const d = splitById(split).days[day]; if (d && d.blocks) return d.blocks.length ? d.blocks : null;
     const x = (EX_PLAN[split] || {})[day]; return x && x.blocks ? x.blocks : null;
   };
@@ -1692,7 +1707,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     return lastBox + counter + '<div class="sets">' + rows + "</div>";
   }
   function viewWorkout() {
-    if (blocksOf(state.wo.split, state.wo.day)) return viewBlockWorkout();
+    if (blocksOf(state.wo.split, state.wo.day, state.wo.key)) return viewBlockWorkout();
     const wo = state.wo, d = new Date(wo.key + "T00:00:00"), p = splitById(wo.split).days[wo.day], items = woItems(wo), last = items.length + 1;
     const step = Math.min(wo.step, last);
     const prog = '<div class="wprog" aria-hidden="true">' + Array.from({ length: last + 1 }, (_, i) => '<span class="' + (i === 0 ? "w" : i === last ? "c" : "m") + (i < step ? " on" : i === step ? " cur" : "") + '"></span>').join("") + "</div>";
@@ -1713,7 +1728,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       nav(step === 1 ? "Aufwärmen" : "Vorherige", step === items.length ? "Weiter zum Cooldown" : "Nächste Übung ›", false);
   }
   function viewBlockWorkout() {
-    const wo = state.wo, d = new Date(wo.key + "T00:00:00"), p = splitById(wo.split).days[wo.day], B = blocksOf(wo.split, wo.day), keys = slotKeys(B);
+    const wo = state.wo, d = new Date(wo.key + "T00:00:00"), p = splitById(wo.split).days[wo.day], B = blocksOf(wo.split, wo.day, wo.key), keys = slotKeys(B);
     wo.slots = wo.slots || {};
     const at = wo.at || "warm", parts = at.split(":"), scr = parts[0], sk = parts[1] + ":" + parts[2];
     const doneN = keys.filter(k => wo.slots[k] && wo.slots[k].done).length;
@@ -1744,14 +1759,17 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       return '<span class="sl' + (sl && sl.done ? " ok" : "") + '"><i>' + (sl && sl.done ? checkSvg : i + 1) + "</i>" + (sl ? esc(sl.n) : "offen") + "</span>"; };
     if (at === "hub") return head() +
       '<section class="wcard ph-m"><span class="wtag">Schritt 2</span><h2>Hauptteil</h2><div class="wmin">' + doneN + " von " + keys.length + ' Übungen erledigt</div><p>Wähle einen Bereich. Die Reihenfolge bestimmst du selbst und kannst jederzeit wechseln.</p></section>' +
-      '<div class="groups">' + B.map(([g, c]) => '<section class="group"><button type="button" class="group-head" data-wgo="group:' + g + '"><span class="gx"><strong>' + gName(g) + '</strong><span class="slots">' +
-        Array.from({ length: c }, (_, i) => slotLine(g, i)).join("") + "</span></span>" + chev + "</button></section>").join("") + "</div>" +
+      '<div class="groups">' + B.map(([g, c]) => '<section class="group has-x"><button type="button" class="group-head" data-wgo="group:' + g + '"><span class="gx"><strong>' + gName(g) + '</strong><span class="slots">' +
+        Array.from({ length: c }, (_, i) => slotLine(g, i)).join("") + "</span></span>" + chev + '</button><button type="button" class="bx" data-bxdel="' + g + '" aria-label="' + gName(g) + ' entfernen">' + xSvg + "</button></section>").join("") +
+      '<button type="button" class="split-new addg" data-bxadd="workout">+ Muskelgruppe hinzufügen</button></div>' +
       '<div class="wnav">' + btn('data-wgo="warm"', "‹ Aufwärmen", true) + btn('data-wgo="cool"', "Weiter zum Cooldown") + "</div>";
     if (scr === "group") {
-      const g = parts[1], c = B.find(x => x[0] === g)[1];
+      const g = parts[1], bb = B.find(x => x[0] === g); if (!bb) { wo.at = "hub"; return viewBlockWorkout(); } const c = bb[1];
       return head("hub", "Hauptteil") + '<div class="dhead"><span class="label">Hauptteil · Bereich</span><h2>' + gName(g) + '</h2><div class="sub">' + c + (c === 1 ? " Übung" : " Übungen") + ", frei wählbar aus deinen " + gName(g) + "-Übungen</div></div>" +
         '<div class="plist">' + Array.from({ length: c }, (_, i) => { const sl = wo.slots[g + ":" + i];
-          return '<button type="button" class="wslot' + (sl && sl.done ? " ok" : "") + '" data-wgo="' + (sl ? "ex:" : "pick:") + g + ":" + i + '"><span class="sn2">' + (sl && sl.done ? checkSvg : i + 1) + '</span><span class="gx"><small>' + ORD[i] + " Übung</small><strong>" + (sl ? esc(sl.n) : "Übung auswählen") + "</strong></span>" + chev + "</button>"; }).join("") + "</div>";
+          return '<div class="wslotw"><button type="button" class="wslot' + (sl && sl.done ? " ok" : "") + '" data-wgo="' + (sl ? "ex:" : "pick:") + g + ":" + i + '"><span class="sn2">' + (sl && sl.done ? checkSvg : i + 1) + '</span><span class="gx"><small>' + (ORD[i] || i + 1 + ".") + " Übung</small><strong>" + (sl ? esc(sl.n) : "Übung auswählen") + "</strong></span>" + chev + "</button>" +
+            '<button type="button" class="bx" data-sxdel="' + g + ":" + i + '" aria-label="Übung entfernen">' + xSvg + "</button></div>"; }).join("") +
+          (c < 10 ? '<button type="button" class="split-new addg" data-sxadd="' + g + '">+ Übung hinzufügen</button>' : "") + "</div>";
     }
     const g = parts[1], i = +parts[2];
     if (scr === "pick") {
@@ -1769,8 +1787,20 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       entryUI(wo, n, p.type) + (["count", "kcal", "time"].includes(exKind(n, p.type)) ? "" : '<p class="hint-sm">Trag ein, was du gemacht hast. Leere Felder werden nicht gespeichert.</p>') +
       '<div class="wnav">' + btn("data-wslotdone", "✓ Übung abschließen") + "</div>";
   }
+  // Muskelgruppe zu einem Training hinzufügen (nur für diesen Tag)
+  function viewAddGroup() {
+    const a = state.addGrp, used = (blocksOf(a.split, a.day, a.key) || []).map(b => b[0]);
+    const sec = (label, list) => '<div class="addsec"><span class="label">' + label + '</span><div class="schips">' + list.map(g => '<button type="button" class="fchip" data-bxpick="' + g.id + '"' + (used.includes(g.id) ? " disabled" : "") + ">+ " + g.name + "</button>").join("") + "</div></div>";
+    return '<button type="button" class="back" data-bxback>‹ Zurück</button>' +
+      '<div class="dhead"><span class="label">Hauptteil · ' + esc(splitById(a.split).days[a.day].title) + '</span><h2>Muskelgruppe hinzufügen</h2><div class="sub">Tippe auf eine Muskelgruppe. Sie gilt nur für dieses Training.</div></div>' +
+      sec("Kraft", MUSCLE_GROUPS) + sec("Ausdauer", CARDIO) + sec("Skills", SKILLS);
+  }
+  // Bereiche eines Tages zum Bearbeiten holen (beim ersten Ändern als Kopie anlegen)
+  function editBlocks(key, split, day) { const k = pk(key, split, day); if (!state.blockOv[k]) state.blockOv[k] = (blocksOf(split, day) || []).map(b => b.slice()); return state.blockOv[k]; }
+  // Übungen eines Bereichs nachrücken lassen, wenn eine gelöscht wird (laufendes Training und gespeicherte Auswahl)
+  function shiftSlots(obj, g, i, c, wrap) { if (!obj) return; for (let j = i; j < c; j++) { const nx = obj[g + ":" + (j + 1)]; if (nx !== undefined) obj[g + ":" + j] = nx; else delete obj[g + ":" + j]; } delete obj[g + ":" + c]; }
   function finishWorkout() {
-    const wo = state.wo, p = splitById(wo.split).days[wo.day], B = blocksOf(wo.split, wo.day);
+    const wo = state.wo, p = splitById(wo.split).days[wo.day], B = blocksOf(wo.split, wo.day, wo.key);
     if (B) state.picks[pk(wo.key, wo.split, wo.day)] = picksFor(wo.key, wo.split, wo.day);
     (B ? Object.values(wo.slots || {}).map(x => x.n) : woItems(wo)).forEach(n => {
       const en = wo.data[n]; if (!en) return;
@@ -2094,7 +2124,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     phone.dataset.mode = state.mode;
     document.querySelectorAll("[data-mode-btn]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.modeBtn === state.mode)));
     document.getElementById("variantNote").textContent = NOTES[state.mode];
-    screen.innerHTML = state.view === "split-edit" && state.draft ? viewSplitEdit() : state.view === "day-edit" && state.draft ? viewDayEdit() : state.view === "workout" && state.wo ? viewWorkout() : state.view === "template" ? viewTemplate() : state.view === "exinfo" ? viewExInfo() : state.view === "detail" ? viewDetail() : state.view === "plan" ? viewPlan() : state.view === "history" ? viewHistory() : state.view === "rahmen" ? viewRahmen() : state.view === "routines" ? viewRoutines() : state.view === "routine" ? viewRoutine() : state.view === "split" ? viewSplits() : state.view === "split-detail" ? viewSplitDetail() : state.view === "exercises" ? viewExercises() : state.view === "group" ? viewGroup() : state.view === "muscle" ? viewMuscle() : state.view === "profile" ? viewProfile() : state.view === "sug" ? viewSug() : viewHome();
+    screen.innerHTML = state.view === "split-edit" && state.draft ? viewSplitEdit() : state.view === "day-edit" && state.draft ? viewDayEdit() : state.view === "workout" && state.wo ? viewWorkout() : state.view === "addgrp" && state.addGrp ? viewAddGroup() : state.view === "template" ? viewTemplate() : state.view === "exinfo" ? viewExInfo() : state.view === "detail" ? viewDetail() : state.view === "plan" ? viewPlan() : state.view === "history" ? viewHistory() : state.view === "rahmen" ? viewRahmen() : state.view === "routines" ? viewRoutines() : state.view === "routine" ? viewRoutine() : state.view === "split" ? viewSplits() : state.view === "split-detail" ? viewSplitDetail() : state.view === "exercises" ? viewExercises() : state.view === "group" ? viewGroup() : state.view === "muscle" ? viewMuscle() : state.view === "profile" ? viewProfile() : state.view === "sug" ? viewSug() : viewHome();
     if (["home", "split", "rahmen", "exercises", "history"].includes(state.view)) screen.insertAdjacentHTML("afterbegin", '<button type="button" class="avatar avatar-btn" data-profile aria-label="Profil öffnen">' + avatarInner() + "</button>");
     // Profilbild immer auf Höhe der Überschrift (wie bei „Hallo Nik“), auch im Verlauf unter dem Umschalter
     { const av = screen.querySelector(".avatar-btn"), h = screen.querySelector(".top h2"); if (av && h) av.style.top = Math.round(h.offsetTop - 12) + "px"; }
@@ -2192,6 +2222,21 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     if ("dreset" in el.dataset) { const id = state.draft.id; delete state.userSplits[id]; state.draft = null; state.splitDetail = id; state.view = "split-detail"; save(); render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset) { state.view = state.view === "muscle" ? "group" : state.view === "template" ? "split-detail" : state.view === "workout" ? (state.wo && state.wo.from === "template" ? "template" : "detail") : state.tab; render(); screen.scrollTop = 0; return; }
     if (el.dataset.tpl) { state.tplDay = +el.dataset.tpl; state.view = "template"; render(); screen.scrollTop = 0; return; }
+    if (el.dataset.bxdel) { const wo = state.wo, inWo = state.view === "workout", key = inWo ? wo.key : el.dataset.wkey, split = inWo ? wo.split : el.dataset.wsplit, day = inWo ? wo.day : +el.dataset.wday, g = el.dataset.bxdel;
+      const B = editBlocks(key, split, day), j = B.findIndex(b => b[0] === g); if (j >= 0) B.splice(j, 1);
+      if (woIs(key, split, day)) Object.keys(wo.slots || {}).filter(k => k.startsWith(g + ":")).forEach(k => delete wo.slots[k]);
+      const pp = state.picks[pk(key, split, day)]; if (pp) Object.keys(pp).filter(k => k.startsWith(g + ":")).forEach(k => delete pp[k]);
+      save(); render(); return; }
+    if (el.dataset.bxadd) { const wo = state.wo, inWo = el.dataset.bxadd === "workout";
+      state.addGrp = inWo ? { key: wo.key, split: wo.split, day: wo.day, back: "workout" } : { key: el.dataset.wkey, split: el.dataset.wsplit, day: +el.dataset.wday, back: state.view };
+      state.view = "addgrp"; render(); screen.scrollTop = 0; return; }
+    if ("bxback" in el.dataset) { state.view = state.addGrp.back; render(); screen.scrollTop = 0; return; }
+    if (el.dataset.bxpick) { const a = state.addGrp, g = el.dataset.bxpick; editBlocks(a.key, a.split, a.day).push([g, CARDIO.some(c => c.id === g) ? 1 : 2]); state.view = a.back; if (a.back === "workout" && state.wo) state.wo.at = "hub"; save(); render(); screen.scrollTop = 0; return; }
+    if (el.dataset.sxadd) { const wo = state.wo, b = editBlocks(wo.key, wo.split, wo.day).find(x => x[0] === el.dataset.sxadd); if (b) b[1] = Math.min(10, b[1] + 1); save(); render(); return; }
+    if (el.dataset.sxdel) { const wo = state.wo, [g, i] = [el.dataset.sxdel.split(":")[0], +el.dataset.sxdel.split(":")[1]], B = editBlocks(wo.key, wo.split, wo.day), j = B.findIndex(x => x[0] === g); if (j < 0) return;
+      const c = B[j][1]; shiftSlots(wo.slots, g, i, c - 1); shiftSlots(state.picks[pk(wo.key, wo.split, wo.day)], g, i, c - 1);
+      if (c <= 1) { B.splice(j, 1); wo.at = "hub"; } else B[j][1] = c - 1;
+      save(); render(); return; }
     if ("start" in el.dataset || el.dataset.wopen) {
       const key = el.dataset.wkey, split = el.dataset.wsplit, day = +el.dataset.wday;
       if (!woIs(key, split, day)) {
@@ -2199,7 +2244,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
         // Schon gemachtes Training wieder öffnen: Auswahl und Einträge übernehmen
         Object.entries(state.picks[pk(key, split, day)] || {}).forEach(([k, n]) => { wo.slots[k] = { n, done: true };
           const x = logFor(n).find(y => y.d === key && y.split === split); if (x) wo.data[n] = { n: x.sets.length, sets: x.sets.map(e => ({ kg: de(e.kg), reps: de(e.reps) })) }; });
-        if (!blocksOf(split, day)) ((EX_PLAN[split] || {})[day] || []).forEach(n => (CHOICE[n] || [n]).forEach(k => {
+        if (!blocksOf(split, day, key)) ((EX_PLAN[split] || {})[day] || []).forEach(n => (CHOICE[n] || [n]).forEach(k => {
           const x = logFor(k).find(y => y.d === key && y.split === split);
           if (x) wo.data[n] = { n: x.sets.length, pick: CHOICE[n] ? k : null, sets: x.sets.map(e => Object.fromEntries(Object.entries(e).map(([f, v]) => [f, de(v)]))) };
         }));
@@ -2215,7 +2260,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     if (el.dataset.wgo) { state.wo.at = el.dataset.wgo; save(); render(); screen.scrollTop = 0; return; }
     if (el.dataset.wchoose) { const sk = state.wo.at.split(":").slice(1).join(":"); state.wo.slots[sk] = { n: el.dataset.wchoose, done: false }; state.wo.at = "ex:" + sk; save(); render(); screen.scrollTop = 0; return; }
     if ("wslotdone" in el.dataset) {
-      const wo = state.wo, sk = wo.at.slice(3), g = sk.split(":")[0], B = blocksOf(wo.split, wo.day); wo.slots[sk].done = true;
+      const wo = state.wo, sk = wo.at.slice(3), g = sk.split(":")[0], B = blocksOf(wo.split, wo.day, wo.key); wo.slots[sk].done = true;
       wo.at = "hub"; save(); render(); screen.scrollTop = 0; return;
     }
     if ("wdone" in el.dataset) { finishWorkout(); render(); screen.scrollTop = 0; return; }
