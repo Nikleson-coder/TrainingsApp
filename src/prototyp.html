@@ -1467,7 +1467,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const mon = addDays(mondayOf(today), state.weekOffset * 7), sun = addDays(mon, 6);
     const rows = Array.from({ length: 7 }, (_, i) => plan(addDays(mon, i))).map((p, i) => {
       const isT = p.key === iso(today);
-      const past = diffDays(p.date) < 0, mov = !past && !isDone(p.key) && !Object.keys(state.sections).some(k => k === p.key && secs(k).some(Boolean));
+      const past = diffDays(p.date) < 0, mov = !isDone(p.key) && !secs(p.key).some(Boolean) && !(state.wo && state.wo.key === p.key);
       let right = p.type === "rest" ? "frei" : "›";
       if (p.type !== "rest" && isDone(p.key)) right = '<span class="st-ok">✓ erledigt</span>';
       else if (p.type !== "rest" && past) right = '<span class="st-miss">offen</span>';
@@ -1481,7 +1481,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       '<div class="top"><span class="date">' + trainings.length + (trainings.length === 1 ? " Training" : " Trainings") + '</span><h2>Wochenplan</h2></div>' +
       '<div class="weeknav"><button type="button" data-week="-1" aria-label="Vorherige Woche">‹</button><span>KW ' + weekNo(mon) + " · " + fmt(mon, { day: "numeric", month: "short" }) + " – " + fmt(sun, { day: "numeric", month: "short" }) + '</span><button type="button" data-week="1" aria-label="Nächste Woche">›</button></div>' +
       '<div class="plist" data-mon="' + iso(mon) + '">' + rows + "</div>" +
-      (Array.from({ length: 7 }, (_, i) => addDays(mon, i)).some(d => diffDays(d) >= 0) ? '<p class="phint">Zum Verschieben einen Tag gedrückt halten und an die neue Stelle ziehen.</p>' : "") +
+      '<p class="phint">Zum Verschieben einen Tag gedrückt halten und an die neue Stelle ziehen. Erledigte Tage bleiben an ihrem Platz.</p>' +
       (state.weekOrder[state.split + ":" + iso(mon)] ? '<button type="button" class="cta ghost" data-wkreset="' + iso(mon) + '">Ursprüngliche Reihenfolge</button>' : "");
   }
 
