@@ -138,8 +138,9 @@ button { font-family: inherit; }
 .prow.is-today { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .prow.rest { background: transparent; border-style: dashed; }
 .prow.mov { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
-.prow.lift { position: relative; z-index: 5; transform: scale(1.04); box-shadow: 0 10px 28px rgba(0,0,0,.22); transition: transform .15s, box-shadow .15s; }
-.plist.dragging .prow:not(.lift) { transition: transform .15s; }
+.prow.lift { position: relative; z-index: 5; box-shadow: 0 10px 28px rgba(0,0,0,.22); transition: box-shadow .15s; will-change: transform; }
+.plist.dragging .prow:not(.lift) { transition: transform .2s ease; }
+.plist.dragging { touch-action: none; }
 .phint { color: var(--muted); font-size: .8rem; text-align: center; margin: 10px 0 0; }
 
 /* Detail */
@@ -2317,14 +2318,18 @@ html, body { margin: 0; height: 100%; min-height: 100vh; overflow: hidden; backg
     const y0 = ptY(e); clearTimeout(dragHold);
     dragHold = setTimeout(() => { const list = row.parentNode, rows = [...list.children], movIdx = rows.map((r, i) => r.classList.contains("mov") ? i : -1).filter(i => i >= 0);
       drag = { row, list, rows, from: +row.dataset.pi, to: +row.dataset.pi, y0, h: row.getBoundingClientRect().height + parseFloat(getComputedStyle(list).rowGap || 8), lo: Math.min(...movIdx), hi: Math.max(...movIdx), D: rows.map(r => r.querySelector(".d").innerHTML) };
-      row.classList.add("lift"); list.classList.add("dragging"); if (navigator.vibrate) navigator.vibrate(15); }, 380);
+      row.classList.add("lift"); row.style.transform = "scale(1.03)"; list.classList.add("dragging"); if (navigator.vibrate) navigator.vibrate(15); }, 380);
     dragStart.y = y0; }
   function dragMove(e) { if (!drag) { if (dragHold && Math.abs(ptY(e) - dragStart.y) > 8) { clearTimeout(dragHold); dragHold = null; } return; }
-    e.preventDefault(); const dy = ptY(e) - drag.y0, f = drag.from, to = Math.max(drag.lo, Math.min(drag.hi, f + Math.round(dy / drag.h))); drag.to = to;
-    drag.row.style.transform = "translateY(" + dy + "px) scale(1.04)";
+    e.preventDefault(); const f = drag.from, dy = Math.max((drag.lo - f) * drag.h, Math.min((drag.hi - f) * drag.h, ptY(e) - drag.y0)), to = f + Math.round(dy / drag.h);
+    drag.row.style.transform = "translateY(" + dy + "px) scale(1.03)"; if (to === drag.to && drag.moved) return; drag.to = to; drag.moved = true;
     drag.rows.forEach((r, i) => { if (r === drag.row) return; let sh = 0; if (f < to && i > f && i <= to) sh = -drag.h; if (f > to && i >= to && i < f) sh = drag.h; r.style.transform = sh ? "translateY(" + sh + "px)" : ""; r.querySelector(".d").innerHTML = drag.D[i + (sh < 0 ? -1 : sh > 0 ? 1 : 0)]; });
     drag.row.querySelector(".d").innerHTML = drag.D[to]; }
-  function dragEnd() { clearTimeout(dragHold); dragHold = null; if (!drag) return; const { from, to, list } = drag; drag = null; dragEnded = Date.now();
+  function dragEnd() { clearTimeout(dragHold); dragHold = null; if (!drag) return; const { from, to, list, row, h } = drag; drag = null; dragEnded = Date.now();
+    // Tag gleitet sanft an seinen neuen Platz, dann wird neu gezeichnet
+    row.style.transition = "transform .16s ease, box-shadow .16s"; row.style.transform = "translateY(" + (to - from) * h + "px)"; row.style.boxShadow = "none";
+    setTimeout(() => dragDrop(from, to, list), 170); }
+  function dragDrop(from, to, list) {
     if (from !== to) { const mon = new Date(list.dataset.mon + "T00:00:00"), k = state.split + ":" + list.dataset.mon, ord = Array.from({ length: 7 }, (_, i) => dayIdx(addDays(mon, i)));
       const [m] = ord.splice(from, 1); ord.splice(to, 0, m); setWeekOrder(list.dataset.mon, ord); }
     render(); }
