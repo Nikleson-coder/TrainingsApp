@@ -124,6 +124,10 @@ button { font-family: inherit; }
 .prow .r { font-size: .8rem; color: var(--muted); font-variant-numeric: tabular-nums; text-align: right; }
 .prow.is-today { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
 .prow.rest { background: transparent; border-style: dashed; }
+.prow.mov { -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.prow.lift { position: relative; z-index: 5; transform: scale(1.04); box-shadow: 0 10px 28px rgba(0,0,0,.22); transition: transform .15s, box-shadow .15s; }
+.plist.dragging .prow:not(.lift) { transition: transform .15s; }
+.phint { color: var(--muted); font-size: .8rem; text-align: center; margin: 10px 0 0; }
 
 /* Detail */
 .back { align-self: flex-start; background: none; border: 0; color: var(--accent); font-weight: 700; cursor: pointer; padding: 4px 0; font-size: .92rem; }
@@ -1320,7 +1324,10 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   function addDays(d, n) { const x = new Date(d); x.setDate(x.getDate() + n); return x; }
   function wd(d) { return (d.getDay() + 6) % 7; }
   function mondayOf(d) { return addDays(d, -wd(d)); }
-  function plan(d) { const t = splitById(state.split).days[wd(d)]; return Object.assign({ date: d, key: iso(d) }, t); }
+  // Wochenplan umsortieren: state.weekOrder["Split:Montag"] = Reihenfolge der Split-Tage für diese eine Woche
+  const wkKey = d => state.split + ":" + iso(mondayOf(d));
+  function dayIdx(d) { const o = state.weekOrder[wkKey(d)]; return o ? o[wd(d)] : wd(d); }
+  function plan(d) { const i = dayIdx(d), t = splitById(state.split).days[i]; return Object.assign({ date: d, key: iso(d), idx: i }, t); }
   const fmt = (d, o) => d.toLocaleDateString("de-DE", o);
   const total = p => p.dur ? p.dur.reduce((a, b) => a + b, 0) : 0;
   const diffDays = d => Math.round((startOfDay(d) - today) / DAY);
@@ -1330,7 +1337,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   // Zustand: abgeschlossene Abschnitte je Tag
   // logs: je Übung Liste von Einheiten { d: "JJJJ-MM-TT", split, sets: [{ kg, reps } | { km, min } | { m, s }] }
   // wo: laufendes Training { key, split, day, step, data: { Übung: { n: Satzanzahl, sets: [...] } } }
-  const state = { view: "home", tab: "home", detail: null, weekOffset: 0, mode: "auto", split: "ka", splitDetail: null, tplDay: null, group: null, muscle: null, histOffset: 0, histMode: "week", monthOffset: 0, profile: { name: "", photo: "", weight: "", height: "" }, exFilter: "all", sections: {}, logs: {}, picks: {}, done: {}, userSplits: {}, routines: { warm: [], cool: [] }, rpicks: {}, userEx: {}, addEx: false, addExType: "w", rSeeded: false, rKind: "warm", rId: null, draft: null, draftDay: 0, wo: null };
+  const state = { view: "home", tab: "home", detail: null, weekOffset: 0, mode: "auto", split: "ka", splitDetail: null, tplDay: null, group: null, muscle: null, histOffset: 0, histMode: "week", monthOffset: 0, profile: { name: "", photo: "", weight: "", height: "" }, exFilter: "all", sections: {}, logs: {}, picks: {}, done: {}, userSplits: {}, routines: { warm: [], cool: [] }, rpicks: {}, userEx: {}, addEx: false, addExType: "w", rSeeded: false, rKind: "warm", rId: null, draft: null, draftDay: 0, wo: null, weekOrder: {} };
   const STORE = window.TA_STORE || "trainingsapp-v2";
   try {
     const saved = JSON.parse(localStorage.getItem(STORE) || "null");
@@ -1338,7 +1345,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       ["sections", "logs", "picks", "done", "userSplits"].forEach(k => Object.assign(state[k], saved[k] || {}));
       Object.keys(state.picks).filter(k => !k.includes("|")).forEach(k => { state.picks[k + "|" + (saved.split || "ka") + "|" + ((new Date(k + "T00:00:00").getDay() + 6) % 7)] = state.picks[k]; delete state.picks[k]; });
       [["Dauerlauf", "Joggen"], ["Sprints", "Sprinten"], ["Radfahren draußen oder Peloton", "Fahrrad draußen"]].forEach(([o, n]) => { if (state.logs[o]) { state.logs[n] = (state.logs[n] || []).concat(state.logs[o]); delete state.logs[o]; } });
-      if (saved.mode) state.mode = saved.mode; if (saved.split) state.split = saved.split; if (saved.profile) Object.assign(state.profile, saved.profile); if (saved.wo) state.wo = saved.wo; if (saved.routines) state.routines = Object.assign({ warm: [], cool: [] }, saved.routines); if (saved.rpicks) state.rpicks = saved.rpicks; if (saved.userEx) state.userEx = saved.userEx; state.rSeeded = !!saved.rSeeded; state.rSeedWarm1 = !!saved.rSeedWarm1; state.rSeedCool1 = !!saved.rSeedCool1; state.tutDone = !!saved.tutDone;
+      if (saved.mode) state.mode = saved.mode; if (saved.split) state.split = saved.split; if (saved.profile) Object.assign(state.profile, saved.profile); if (saved.wo) state.wo = saved.wo; if (saved.routines) state.routines = Object.assign({ warm: [], cool: [] }, saved.routines); if (saved.rpicks) state.rpicks = saved.rpicks; if (saved.userEx) state.userEx = saved.userEx; if (saved.weekOrder) state.weekOrder = saved.weekOrder; state.rSeeded = !!saved.rSeeded; state.rSeedWarm1 = !!saved.rSeedWarm1; state.rSeedCool1 = !!saved.rSeedCool1; state.tutDone = !!saved.tutDone;
     } else {
       // Aus der alten Version nur Einstellungen und Profil übernehmen, keine Beispielwerte
       const old = JSON.parse(localStorage.getItem("trainingsapp-proto") || "null");
@@ -1364,7 +1371,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   // Beispielroutinen aus Version 59 wieder entfernen
   state.routines.warm = state.routines.warm.filter(r => r.id !== "rw-beispiel");
   state.routines.cool = state.routines.cool.filter(r => r.id !== "rc-beispiel");
-  function save() { try { const json = JSON.stringify({ savedAt: Date.now(), sections: state.sections, logs: state.logs, picks: state.picks, done: state.done, userSplits: state.userSplits, routines: state.routines, rpicks: state.rpicks, userEx: state.userEx, rSeeded: state.rSeeded, rSeedWarm1: state.rSeedWarm1, rSeedCool1: state.rSeedCool1, tutDone: !!state.tutDone, wo: state.wo, mode: state.mode, split: state.split, profile: state.profile }); localStorage.setItem(STORE, json); if (window.TA_cloud) window.TA_cloud(json); } catch (e) {} }
+  function save() { try { const json = JSON.stringify({ savedAt: Date.now(), sections: state.sections, logs: state.logs, picks: state.picks, done: state.done, userSplits: state.userSplits, routines: state.routines, rpicks: state.rpicks, userEx: state.userEx, weekOrder: state.weekOrder, rSeeded: state.rSeeded, rSeedWarm1: state.rSeedWarm1, rSeedCool1: state.rSeedCool1, tutDone: !!state.tutDone, wo: state.wo, mode: state.mode, split: state.split, profile: state.profile }); localStorage.setItem(STORE, json); if (window.TA_cloud) window.TA_cloud(json); } catch (e) {} }
   const secs = k => state.sections[k] || [false, false, false];
   const isDone = k => secs(k).every(Boolean);
 
@@ -1448,13 +1455,13 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 
   function viewPlan() {
     const mon = addDays(mondayOf(today), state.weekOffset * 7), sun = addDays(mon, 6);
-    const rows = Array.from({ length: 7 }, (_, i) => plan(addDays(mon, i))).map(p => {
+    const rows = Array.from({ length: 7 }, (_, i) => plan(addDays(mon, i))).map((p, i) => {
       const isT = p.key === iso(today);
-      const past = diffDays(p.date) < 0;
+      const past = diffDays(p.date) < 0, mov = !past && !isDone(p.key) && !Object.keys(state.sections).some(k => k === p.key && secs(k).some(Boolean));
       let right = p.type === "rest" ? "frei" : "›";
       if (p.type !== "rest" && isDone(p.key)) right = '<span class="st-ok">✓ erledigt</span>';
       else if (p.type !== "rest" && past) right = '<span class="st-miss">offen</span>';
-      return '<button type="button" class="prow t-' + p.type + (isT ? " is-today" : "") + (p.type === "rest" ? " rest" : "") + '" data-open="' + p.key + '">' +
+      return '<button type="button" class="prow t-' + p.type + (isT ? " is-today" : "") + (p.type === "rest" ? " rest" : "") + (mov ? " mov" : "") + '" data-open="' + p.key + '" data-pi="' + i + '">' +
         '<span class="d"><small>' + fmt(p.date, { weekday: "short" }).replace(".", "") + "</small><b>" + p.date.getDate() + "</b></span>" +
         '<span class="t"><span class="chip">' + TYPE_LABEL[p.type] + "</span><strong>" + (p.type === "rest" ? "Erholung" : esc(p.title)) + "</strong></span>" +
         '<span class="r">' + right + "</span></button>";
@@ -1463,7 +1470,9 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     return '<button type="button" class="back" data-back>‹ Heute</button>' +
       '<div class="top"><span class="date">' + trainings.length + (trainings.length === 1 ? " Training" : " Trainings") + '</span><h2>Wochenplan</h2></div>' +
       '<div class="weeknav"><button type="button" data-week="-1" aria-label="Vorherige Woche">‹</button><span>KW ' + weekNo(mon) + " · " + fmt(mon, { day: "numeric", month: "short" }) + " – " + fmt(sun, { day: "numeric", month: "short" }) + '</span><button type="button" data-week="1" aria-label="Nächste Woche">›</button></div>' +
-      '<div class="plist">' + rows + "</div>";
+      '<div class="plist" data-mon="' + iso(mon) + '">' + rows + "</div>" +
+      (Array.from({ length: 7 }, (_, i) => addDays(mon, i)).some(d => diffDays(d) >= 0) ? '<p class="phint">Zum Verschieben einen Tag gedrückt halten und an die neue Stelle ziehen.</p>' : "") +
+      (state.weekOrder[state.split + ":" + iso(mon)] ? '<button type="button" class="cta ghost" data-wkreset="' + iso(mon) + '">Ursprüngliche Reihenfolge</button>' : "");
   }
 
   const histToggle = () => '<div class="hmode" role="group" aria-label="Ansicht wählen">' + [["week", "Wochenansicht"], ["month", "Monatsansicht"]].map(([k, l]) =>
@@ -1516,11 +1525,11 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
         '<div class="restbox"><strong>Heute kein Training geplant</strong><span>Platz für Regenerations-Ideen, die wir im Feintuning festlegen, zum Beispiel Spaziergang, Mobility oder Faszienrolle.</span></div>';
     }
     const s = secs(p.key), done = isDone(p.key);
-    const running = woIs(p.key, state.split, wd(d));
+    const running = woIs(p.key, state.split, p.idx);
     return back + '<div class="dhead t-' + p.type + '"><span class="chip" style="align-self:flex-start">' + TYPE_LABEL[p.type] + "</span><h2>" + esc(p.title) + '</h2><div class="sub">' + esc(p.sub) + " · " + dateLine + "</div>" + phasebar(p) + "</div>" +
-      phaseCards(p, state.split, wd(d), s, done ? iso(addDays(d, 1)) : p.key, p.key, p.key) +
+      phaseCards(p, state.split, p.idx, s, done ? iso(addDays(d, 1)) : p.key, p.key, p.key) +
       (done ? '<div class="cta finish is-done" aria-disabled="true">✓ Training abgeschlossen</div><button type="button" class="cta finish is-reset" data-wreset>Training zurücksetzen</button>'
-        : '<button type="button" class="cta finish" data-start data-wkey="' + p.key + '" data-wsplit="' + state.split + '" data-wday="' + wd(d) + '">' + (running ? "Training fortsetzen" : "Training starten") + "</button>");
+        : '<button type="button" class="cta finish" data-start data-wkey="' + p.key + '" data-wsplit="' + state.split + '" data-wday="' + p.idx + '">' + (running ? "Training fortsetzen" : "Training starten") + "</button>");
   }
   // Drei Abschnitte mit Übungsliste; s = abgehakte Abschnitte (null = Vorlage ohne Haken)
   function phaseCards(p, split, day, s, before, curKey, tapKey) {
@@ -1773,7 +1782,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       (CHOICE[n] || [n]).forEach(k => { if (state.logs[k]) state.logs[k] = state.logs[k].filter(x => !(x.d === wo.key && x.split === wo.split)); });
       state.logs[name] = logFor(name).concat([{ d: wo.key, split: wo.split, sets }]);
     });
-    if (wo.split === state.split && wd(new Date(wo.key + "T00:00:00")) === wo.day) state.sections[wo.key] = [true, true, true];
+    if (wo.split === state.split && dayIdx(new Date(wo.key + "T00:00:00")) === wo.day) state.sections[wo.key] = [true, true, true];
     state.done = state.done || {}; state.done[pk(wo.key, wo.split, wo.day)] = true;
     if (wo.rt && (wo.rt.warm || wo.rt.cool)) state.rpicks[pk(wo.key, wo.split, wo.day)] = wo.rt;
     state.view = wo.from === "template" ? "template" : "detail"; if (wo.from === "template") { state.splitDetail = wo.split; state.tplDay = wo.day; } else state.detail = wo.key;
@@ -2157,10 +2166,11 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     if ("pstop" in el.dataset) { clearInterval(pTimer); state.play = null; render(); return; }
     if ("pfinish" in el.dataset) { const k = state.play.k; clearInterval(pTimer); state.play = null; if (k === "warm") { const b = document.createElement("button"); b.dataset.wphdone = ""; screen.appendChild(b); b.click(); return; } render(); return; }
     if ("wphdone" in el.dataset) { const wo = state.wo; wo.rdone = wo.rdone || {}; wo.rdone.warm = true;
-      if (wo.split === state.split && wd(new Date(wo.key + "T00:00:00")) === wo.day) { const sc = secs(wo.key).slice(); sc[0] = true; state.sections[wo.key] = sc; }
+      if (wo.split === state.split && dayIdx(new Date(wo.key + "T00:00:00")) === wo.day) { const sc = secs(wo.key).slice(); sc[0] = true; state.sections[wo.key] = sc; }
       wo.at = "hub"; save(); render(); screen.scrollTop = 0; return; }
     if ("rdelete" in el.dataset) { if (!el.dataset.armed) { el.dataset.armed = "1"; el.textContent = "Wirklich löschen? Nochmal tippen"; el.classList.add("armed"); return; } state.routines[state.rKind] = state.routines[state.rKind].filter(x => x.id !== state.rId); state.view = "routines"; save(); render(); return; }
     if ("back" in el.dataset && (state.view === "routine" || state.view === "routines")) { state.view = state.view === "routine" ? "routines" : "rahmen"; render(); screen.scrollTop = 0; return; }
+    if (el.dataset.wkreset) { delete state.weekOrder[state.split + ":" + el.dataset.wkreset]; save(); render(); return; }
     if ("openplan" in el.dataset) { state.tab = "home"; state.view = "plan"; state.weekOffset = 0; state.planBack = true; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "plan") { state.planBack = false; state.view = "home"; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "detail" && state.planBack) { state.view = "plan"; render(); screen.scrollTop = 0; return; }
@@ -2232,6 +2242,28 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   // Einführung beim ersten Anmelden (nur mit Konten, nicht in der Vorschau)
   window.addEventListener("resize", () => { if (state.tut != null) render(); });
   document.addEventListener("touchmove", e => { if (state.tut != null) e.preventDefault(); }, { passive: false });
+  // Wochenplan: Tag gedrückt halten, dann ziehen; die anderen Tage rutschen nach
+  let drag = null, dragHold = null, dragEnded = 0;
+  const ptY = e => (e.touches ? e.touches[0] || e.changedTouches[0] : e).clientY;
+  function dragStart(e) { const row = e.target.closest && e.target.closest(".prow.mov"); if (!row || state.view !== "plan") return;
+    const y0 = ptY(e); clearTimeout(dragHold);
+    dragHold = setTimeout(() => { const list = row.parentNode, rows = [...list.children], movIdx = rows.map((r, i) => r.classList.contains("mov") ? i : -1).filter(i => i >= 0);
+      drag = { row, list, rows, from: +row.dataset.pi, to: +row.dataset.pi, y0, h: row.getBoundingClientRect().height + parseFloat(getComputedStyle(list).rowGap || 8), lo: Math.min(...movIdx), hi: Math.max(...movIdx), D: rows.map(r => r.querySelector(".d").innerHTML) };
+      row.classList.add("lift"); list.classList.add("dragging"); if (navigator.vibrate) navigator.vibrate(15); }, 380);
+    dragStart.y = y0; }
+  function dragMove(e) { if (!drag) { if (dragHold && Math.abs(ptY(e) - dragStart.y) > 8) { clearTimeout(dragHold); dragHold = null; } return; }
+    e.preventDefault(); const dy = ptY(e) - drag.y0, f = drag.from, to = Math.max(drag.lo, Math.min(drag.hi, f + Math.round(dy / drag.h))); drag.to = to;
+    drag.row.style.transform = "translateY(" + dy + "px) scale(1.04)";
+    drag.rows.forEach((r, i) => { if (r === drag.row) return; let sh = 0; if (f < to && i > f && i <= to) sh = -drag.h; if (f > to && i >= to && i < f) sh = drag.h; r.style.transform = sh ? "translateY(" + sh + "px)" : ""; r.querySelector(".d").innerHTML = drag.D[i + (sh < 0 ? -1 : sh > 0 ? 1 : 0)]; });
+    drag.row.querySelector(".d").innerHTML = drag.D[to]; }
+  function dragEnd() { clearTimeout(dragHold); dragHold = null; if (!drag) return; const { from, to, list } = drag; drag = null; dragEnded = Date.now();
+    if (from !== to) { const mon = new Date(list.dataset.mon + "T00:00:00"), k = state.split + ":" + list.dataset.mon, ord = Array.from({ length: 7 }, (_, i) => dayIdx(addDays(mon, i)));
+      const [m] = ord.splice(from, 1); ord.splice(to, 0, m); if (ord.every((x, i) => x === i)) delete state.weekOrder[k]; else state.weekOrder[k] = ord; save(); }
+    render(); }
+  document.addEventListener("touchstart", dragStart, { passive: true }); document.addEventListener("touchmove", dragMove, { passive: false }); document.addEventListener("touchend", dragEnd); document.addEventListener("touchcancel", dragEnd);
+  document.addEventListener("mousedown", dragStart); document.addEventListener("mousemove", dragMove); document.addEventListener("mouseup", dragEnd);
+  document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest(".prow.mov")) e.preventDefault(); });
+  document.addEventListener("click", e => { if (Date.now() - dragEnded < 400) { e.stopPropagation(); e.preventDefault(); } }, true);
   if (document.fonts) document.fonts.ready.then(() => { if (state.tut != null) render(); });
   if (window.TA_logout && !state.tutDone) tutGo(0); else render();
   };
