@@ -366,13 +366,15 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
 .blkbtn .exn { flex: 1; }
 .phase li.blk { align-items: center; gap: 0; flex-wrap: nowrap; }
 .phase li.blk .blkbtn { flex: 1; min-width: 0; width: auto; }
-.bx { flex: none; width: 34px; height: 34px; margin-right: 8px; display: grid; place-items: center; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--muted); cursor: pointer; padding: 0; }
-.bx svg { width: 16px; height: 16px; stroke: currentColor; stroke-width: 2.2; fill: none; stroke-linecap: round; }
+.bx { position: absolute; top: 4px; right: 4px; width: 28px; height: 28px; display: grid; place-items: center; border-radius: 50%; border: 0; background: none; color: var(--muted); cursor: pointer; padding: 0; opacity: .8; }
+.bx svg { width: 12px; height: 12px; stroke: currentColor; stroke-width: 2.2; fill: none; stroke-linecap: round; }
+.phase li.blk, .group.has-x, .wslotw { position: relative; }
+.phase li.blk .blkbtn, .group.has-x .group-head, .wslotw .wslot { padding-right: 34px; }
 .phase li.addg { opacity: .65; }
 .phase li.addg .blkbtn strong { color: var(--muted); font-weight: 700; }
-.group.has-x { display: flex; align-items: center; } .group.has-x .group-head { flex: 1; min-width: 0; } .group.has-x .bx { margin-right: 12px; }
+.group.has-x .bx { top: 8px; right: 8px; }
 .split-new.addg { opacity: .75; margin-top: 2px; }
-.wslotw { display: flex; align-items: center; gap: 8px; } .wslotw .wslot { flex: 1; min-width: 0; } .wslotw .bx { margin-right: 0; }
+.wslotw .wslot { width: 100%; }
 .phase li.blk > .exn { padding: 12px; }
 .whead { display: flex; flex-direction: column; gap: 8px; }
 .wprog { display: flex; gap: 4px; }
@@ -1556,7 +1558,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const blockList = B ? '<ul class="exs">' + B.map(([g, c]) => { nr += c; const names = Array.from({ length: c }, (_, k) => picks && picks[g + ":" + k]).filter(Boolean);
       const inner = '<div class="exn"><strong>' + gName(g) + "</strong><small>" + (names.length ? names.map(esc).join(" · ") : c + (c === 1 ? " Übung" : " Übungen") + " frei wählbar") + "</small></div>";
       const at = '" data-wkey="' + tapKey + '" data-wsplit="' + split + '" data-wday="' + day + '"';
-      return '<li class="exrow blk">' + (tap ? '<button type="button" class="blkbtn" data-wopen="group:' + g + at + '>' + inner + chev + "</button>" +
+      return '<li class="exrow blk">' + (tap ? '<button type="button" class="blkbtn" data-wopen="group:' + g + at + '>' + inner + "</button>" +
         '<button type="button" class="bx" data-bxdel="' + g + at + ' aria-label="' + gName(g) + ' entfernen">' + xSvg + "</button>" : inner) + "</li>"; }).join("") +
       (tap ? '<li class="exrow blk addg"><button type="button" class="blkbtn" data-bxadd="detail" data-wkey="' + tapKey + '" data-wsplit="' + split + '" data-wday="' + day + '"><div class="exn"><strong>+ Muskelgruppe hinzufügen</strong></div></button></li>' : "") + "</ul>" : "";
     return PHASES.map((ph, i) =>
@@ -1761,14 +1763,14 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     if (at === "hub") return head() +
       '<section class="wcard ph-m"><span class="wtag">Schritt 2</span><h2>Hauptteil</h2><div class="wmin">' + doneN + " von " + keys.length + ' Übungen erledigt</div><p>Wähle einen Bereich. Die Reihenfolge bestimmst du selbst und kannst jederzeit wechseln.</p></section>' +
       '<div class="groups">' + B.map(([g, c]) => '<section class="group has-x"><button type="button" class="group-head" data-wgo="group:' + g + '"><span class="gx"><strong>' + gName(g) + '</strong><span class="slots">' +
-        Array.from({ length: c }, (_, i) => slotLine(g, i)).join("") + "</span></span>" + chev + '</button><button type="button" class="bx" data-bxdel="' + g + '" aria-label="' + gName(g) + ' entfernen">' + xSvg + "</button></section>").join("") +
+        Array.from({ length: c }, (_, i) => slotLine(g, i)).join("") + "</span></span>" + '</button><button type="button" class="bx" data-bxdel="' + g + '" aria-label="' + gName(g) + ' entfernen">' + xSvg + "</button></section>").join("") +
       '<button type="button" class="split-new addg" data-bxadd="workout">+ Muskelgruppe hinzufügen</button></div>' +
       '<div class="wnav">' + btn('data-wgo="warm"', "‹ Aufwärmen", true) + btn('data-wgo="cool"', "Weiter zum Cooldown") + "</div>";
     if (scr === "group") {
       const g = parts[1], bb = B.find(x => x[0] === g); if (!bb) { wo.at = "hub"; return viewBlockWorkout(); } const c = bb[1];
       return head("hub", "Hauptteil") + '<div class="dhead"><span class="label">Hauptteil · Bereich</span><h2>' + gName(g) + '</h2><div class="sub">' + c + (c === 1 ? " Übung" : " Übungen") + ", frei wählbar aus deinen " + gName(g) + "-Übungen</div></div>" +
         '<div class="plist">' + Array.from({ length: c }, (_, i) => { const sl = wo.slots[g + ":" + i];
-          return '<div class="wslotw"><button type="button" class="wslot' + (sl && sl.done ? " ok" : "") + '" data-wgo="' + (sl ? "ex:" : "pick:") + g + ":" + i + '"><span class="sn2">' + (sl && sl.done ? checkSvg : i + 1) + '</span><span class="gx"><small>' + (ORD[i] || i + 1 + ".") + " Übung</small><strong>" + (sl ? esc(sl.n) : "Übung auswählen") + "</strong></span>" + chev + "</button>" +
+          return '<div class="wslotw"><button type="button" class="wslot' + (sl && sl.done ? " ok" : "") + '" data-wgo="' + (sl ? "ex:" : "pick:") + g + ":" + i + '"><span class="sn2">' + (sl && sl.done ? checkSvg : i + 1) + '</span><span class="gx"><small>' + (ORD[i] || i + 1 + ".") + " Übung</small><strong>" + (sl ? esc(sl.n) : "Übung auswählen") + "</strong></span>" + "</button>" +
             '<button type="button" class="bx" data-sxdel="' + g + ":" + i + '" aria-label="Übung entfernen">' + xSvg + "</button></div>"; }).join("") +
           (c < 10 ? '<button type="button" class="split-new addg" data-sxadd="' + g + '">+ Übung hinzufügen</button>' : "") + "</div>";
     }
