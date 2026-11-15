@@ -1467,7 +1467,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     const mon = addDays(mondayOf(today), state.weekOffset * 7), sun = addDays(mon, 6);
     const rows = Array.from({ length: 7 }, (_, i) => plan(addDays(mon, i))).map((p, i) => {
       const isT = p.key === iso(today);
-      const past = diffDays(p.date) < 0, mov = !isDone(p.key) && !secs(p.key).some(Boolean) && !(state.wo && state.wo.key === p.key);
+      const past = diffDays(p.date) < 0, mov = true;
       let right = p.type === "rest" ? "frei" : "›";
       if (p.type !== "rest" && isDone(p.key)) right = '<span class="st-ok">✓ erledigt</span>';
       else if (p.type !== "rest" && past) right = '<span class="st-miss">offen</span>';
@@ -1481,7 +1481,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       '<div class="top"><span class="date">' + trainings.length + (trainings.length === 1 ? " Training" : " Trainings") + '</span><h2>Wochenplan</h2></div>' +
       '<div class="weeknav"><button type="button" data-week="-1" aria-label="Vorherige Woche">‹</button><span>KW ' + weekNo(mon) + " · " + fmt(mon, { day: "numeric", month: "short" }) + " – " + fmt(sun, { day: "numeric", month: "short" }) + '</span><button type="button" data-week="1" aria-label="Nächste Woche">›</button></div>' +
       '<div class="plist" data-mon="' + iso(mon) + '">' + rows + "</div>" +
-      '<p class="phint">Zum Verschieben einen Tag gedrückt halten und an die neue Stelle ziehen. Erledigte Tage bleiben an ihrem Platz.</p>' +
+      '<p class="phint">Zum Verschieben einen Tag gedrückt halten und an die neue Stelle ziehen. Erledigte Trainings nehmen ihre Einträge mit.</p>' +
       (state.weekOrder[state.split + ":" + iso(mon)] ? '<button type="button" class="cta ghost" data-wkreset="' + iso(mon) + '">Ursprüngliche Reihenfolge</button>' : "");
   }
 
@@ -2200,7 +2200,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       wo.at = "hub"; save(); render(); screen.scrollTop = 0; return; }
     if ("rdelete" in el.dataset) { if (!el.dataset.armed) { el.dataset.armed = "1"; el.textContent = "Wirklich löschen? Nochmal tippen"; el.classList.add("armed"); return; } state.routines[state.rKind] = state.routines[state.rKind].filter(x => x.id !== state.rId); state.view = "routines"; save(); render(); return; }
     if ("back" in el.dataset && (state.view === "routine" || state.view === "routines")) { state.view = state.view === "routine" ? "routines" : "rahmen"; render(); screen.scrollTop = 0; return; }
-    if (el.dataset.wkreset) { delete state.weekOrder[state.split + ":" + el.dataset.wkreset]; save(); render(); return; }
+    if (el.dataset.wkreset) { setWeekOrder(el.dataset.wkreset, [0, 1, 2, 3, 4, 5, 6]); render(); return; }
     if ("openplan" in el.dataset) { state.tab = "home"; state.view = "plan"; state.weekOffset = 0; state.planBack = true; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "plan") { state.planBack = false; state.view = "home"; render(); screen.scrollTop = 0; return; }
     if ("back" in el.dataset && state.view === "detail" && state.planBack) { state.view = "plan"; render(); screen.scrollTop = 0; return; }
@@ -2303,8 +2303,18 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     drag.row.querySelector(".d").innerHTML = drag.D[to]; }
   function dragEnd() { clearTimeout(dragHold); dragHold = null; if (!drag) return; const { from, to, list } = drag; drag = null; dragEnded = Date.now();
     if (from !== to) { const mon = new Date(list.dataset.mon + "T00:00:00"), k = state.split + ":" + list.dataset.mon, ord = Array.from({ length: 7 }, (_, i) => dayIdx(addDays(mon, i)));
-      const [m] = ord.splice(from, 1); ord.splice(to, 0, m); if (ord.every((x, i) => x === i)) delete state.weekOrder[k]; else state.weekOrder[k] = ord; save(); }
+      const [m] = ord.splice(from, 1); ord.splice(to, 0, m); setWeekOrder(list.dataset.mon, ord); }
     render(); }
+  // Neue Reihenfolge einer Woche übernehmen; Erledigtes wandert mit dem Training an den neuen Tag
+  function setWeekOrder(monIso, ord) { const mon = new Date(monIso + "T00:00:00"), k = state.split + ":" + monIso, old = Array.from({ length: 7 }, (_, i) => dayIdx(addDays(mon, i)));
+      // mit dem Training an den neuen Tag: Haken, Auswahl, Routinen, geänderte Bereiche, Einträge
+      const map = {}; old.forEach((t, i) => { const j = ord.indexOf(t); if (j !== i) map[iso(addDays(mon, i))] = iso(addDays(mon, j)); });
+      const sp = state.split, mv = o => { if (!o) return; const tmp = {}; Object.keys(o).forEach(key => { const [d, s2, ...r] = key.split("|"); const nd = map[d];
+          if (nd && (r.length ? s2 === sp : true)) { tmp[[nd, s2, ...r].filter(x => x !== undefined).join("|")] = o[key]; delete o[key]; } }); Object.assign(o, tmp); };
+      mv(state.sections); mv(state.picks); mv(state.done); mv(state.rpicks); mv(state.blockOv);
+      Object.values(state.logs).forEach(list => list.forEach(e => { if (e.split === sp && map[e.d]) e.d = map[e.d]; }));
+      if (state.wo && state.wo.split === sp && map[state.wo.key]) state.wo.key = map[state.wo.key];
+      if (ord.every((x, i) => x === i)) delete state.weekOrder[k]; else state.weekOrder[k] = ord; save();  }
   document.addEventListener("touchstart", dragStart, { passive: true }); document.addEventListener("touchmove", dragMove, { passive: false }); document.addEventListener("touchend", dragEnd); document.addEventListener("touchcancel", dragEnd);
   document.addEventListener("mousedown", dragStart); document.addEventListener("mousemove", dragMove); document.addEventListener("mouseup", dragEnd);
   document.addEventListener("contextmenu", e => { if (e.target.closest && e.target.closest(".prow.mov")) e.preventDefault(); });
