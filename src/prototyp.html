@@ -598,7 +598,8 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     frontRaise1: { palm: [-1, 0, 0], anchor: "feet", cam: [40, 8, 3.5], A: { sf: 4, e: 6, saL: 6 }, B: { sfR: 92, sfL: 4, eR: 6 }, grip: 1, one: "R" },
     frontRaiseCable: { palm: [-1, 0, 0], anchor: "feet", cam: [40, 8, 3.5], hbar: .2, props: [["cable", 0, .15, -.45, "both"], ["box", .16, 2.3, .16, 0, 1.15, -.55, 0, 1]], A: { sf: 4, e: 6, sa: -6 }, B: { sf: 92, e: 6, sa: -8 }, grip: 1 },
     frontRaiseCable1: { palm: [-1, 0, 0], anchor: "feet", cam: [40, 8, 3.5], props: [["cable", -.15, .15, -.45, "R"], ["box", .16, 2.3, .16, -.15, 1.15, -.55, 0, 1]], A: { sf: 4, e: 6, saL: 6 }, B: { sfR: 92, sfL: 4 }, grip: 1, one: "R" },
-    pike: { flat: 1, anchor: "floor", on: "hands,toes", level: ["hands", "toes"], levelSign: 1, foot: 1, cam: [80, 12, 3.8], A: { p: 120, hf: 105, sf: 170, e: 0, wf: -70, pf: -30 }, B: { p: 128, hf: 110, sf: 150, sa: 25, e: 95, wf: -70 } },
+    frontRaiseBb: { palmLocal: [0, 0, -1], anchor: "feet", cam: [40, 8, 3.5], A: { sf: 4, e: 4, sa: 4 }, B: { sf: 92, e: 4, sa: 4 }, grip: 1 },
+    pike: { flat: 1, anchor: "floor", on: "hands,toes", level: ["hands", "toes"], levelSign: 1, foot: 1, cam: [80, 12, 3.8], A: { p: 120, hf: 105, sf: 170, e: 0, wf: -70, pf: -30 }, B: { p: 128, hf: 110, sf: 150, sa: 25, e: 82, wf: -70 } },
     latRaise: { palmLocal: [0, 0, -1], anchor: "feet", cam: [20, 8, 3.5], A: { sa: 8, e: 10, sf: 8 }, B: { sa: 86, e: 10, sf: 12 }, grip: 1 },
     latRaise1: { palmLocal: [0, 0, -1], anchor: "feet", cam: [20, 8, 3.5], A: { sa: 8, e: 10, sf: 8 }, B: { saR: 86, saL: 8 }, grip: 1, one: "R" },
     latRaiseCable: { palmLocal: [0, 0, -1], anchor: "feet", cam: [20, 8, 3.5], props: [["cable", .55, .15, 0, "each"], ["box", .14, 2.3, .14, .62, 1.15, -.05, 0, 1], ["box", .14, 2.3, .14, -.62, 1.15, -.05, 0, 1]], A: { sa: -6, e: 10, sf: 10 }, B: { sa: 86, e: 10, sf: 12 }, grip: 1 },
@@ -690,7 +691,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
       return { p: 90, sfL: 180 - 360 * ph, sfR: 360 - 360 * ph, eL: 20 + 25 * Math.max(0, Math.sin(w)), eR: 20 + 25 * Math.max(0, -Math.sin(w)), sa: 8, hfL: 12 * Math.sin(4 * w), hfR: -12 * Math.sin(4 * w), k: 10, pf: 40, nk: -20 }; } }
   };
   const MAP = [
-    [/Pike/i, "pike", ["delts", "triceps"], ""],
+    [/Pike/i, "pike", ["deltsF", "deltsM", "triceps"], ""],
     [/Handstand Push/i, "hsPush", ["delts", "triceps"], ""],
     // Rücken
     [/Shrug/i, "shrug", ["traps", "fore"]],
@@ -735,6 +736,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
     [/Schulterdrücken/i, "ohp", ["delts", "triceps"]],
     [/Frontheben.*Kabelturm.*einarmig/i, "frontRaiseCable1", ["deltsF", "deltsM"]],
     [/Frontheben.*Kabelturm/i, "frontRaiseCable", ["deltsF", "deltsM"]],
+    [/Frontheben.*Langhantel/i, "frontRaiseBb", ["deltsF", "deltsM"]],
     [/Frontheben.*einarmig/i, "frontRaise1", ["deltsF", "deltsM"]],
     [/Frontheben/i, "frontRaise", ["deltsF", "deltsM"]],
     [/Seitheben.*Maschine.*einarmig/i, "latRaiseMachine1", ["delts"], ""],
@@ -813,7 +815,7 @@ button.prow { width: 100%; font: inherit; color: inherit; text-align: left; curs
   ];
   function spec(n) { const m = MAP.find(([re]) => re.test(n)); if (!m) return null;
     if (/mit Zusatzgewicht/.test(n) && /^(pullup|pullupNarrow|dips)$/.test(m[1])) return { move: m[1], muscles: m[2], item: "belt" };
-    if (/mit Zusatzgewicht/.test(n) && m[1] === "pushup") return { move: m[1], muscles: m[2], item: "vest" };
+    if (/mit Zusatzgewicht/.test(n) && (m[1] === "pushup" || m[1] === "pike")) return { move: m[1], muscles: m[2], item: "vest" };
     return { move: m[1], muscles: m[2], one: MOVES[m[1]].one, item: m[3] != null ? (/mit Zusatzgewicht/.test(n) && m[3] === "" && m[1] === "russian" ? "plate" : m[3]) : /SZ-Stange/.test(n) ? "sz" : /Langhantel/.test(n) ? "bb" : /Kurzhantel/.test(n) || m[1] === "carry" ? "db" : /Kabelturm|Maschine|Latzug|Überzüge/.test(n) ? "handle" : "" }; }
 
   function ell(parent, rx, ry, rz, x, y, z, mat, rot) { const m = new T.Mesh(SPH, mat); m.scale.set(rx, ry, rz); m.position.set(x, y, z); if (rot) m.rotation.set(rot[0] || 0, rot[1] || 0, rot[2] || 0); m.castShadow = true; parent.add(m); return m; }
